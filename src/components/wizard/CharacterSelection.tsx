@@ -1,139 +1,152 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, Users, Edit } from 'lucide-react';
+import { PROFESSIONAL_GENRES } from '@/data/storyElements';
 
+// Personaggi specifici per ogni genere - molto più dettagliati e appropriati
 const CHARACTERS_BY_GENRE = {
-  fantasy: {
+  'literary-fantasy': {
     protagonists: [
-      { id: 'chosen_one', name: 'Il Prescelto', description: 'Giovane eroe destinato a salvare il mondo' },
-      { id: 'wizard', name: 'Mago Veterano', description: 'Sapiente custode di antichi segreti' },
-      { id: 'warrior', name: 'Guerriero Valoroso', description: 'Combattente coraggioso con un passato oscuro' },
-      { id: 'rogue', name: 'Ladro con Cuore d\'Oro', description: 'Furfante che lotta per giustizia' }
+      { id: 'chosen_one', name: 'Il Prescelto Tormentato', description: 'Giovane con un destino pesante, lotta con il peso della responsabilità' },
+      { id: 'wise_mentor', name: 'Mentore Caduto', description: 'Ex-maestro che deve riscattare i propri errori del passato' },
+      { id: 'reluctant_hero', name: 'Eroe Riluttante', description: 'Persona comune costretta a diventare leggenda' },
+      { id: 'scholar_warrior', name: 'Studioso Guerriero', description: 'Unisce saggezza antica e abilità marziali' }
     ],
     antagonists: [
-      { id: 'dark_lord', name: 'Signore Oscuro', description: 'Antica entità di potere immenso' },
-      { id: 'corrupt_king', name: 'Re Corrotto', description: 'Sovrano caduto nell\'oscurità' },
-      { id: 'dragon', name: 'Drago Antico', description: 'Bestia primordiale di immensa saggezza e furia' },
-      { id: 'necromancer', name: 'Negromante', description: 'Stregone che comanda i morti' }
+      { id: 'fallen_god', name: 'Divinità Corrotta', description: 'Entità un tempo benevolente ora consumata dall\'oscurità' },
+      { id: 'shadow_emperor', name: 'Imperatore delle Ombre', description: 'Tiranno che controlla attraverso paura e magia oscura' },
+      { id: 'twisted_sage', name: 'Saggio Pervertito', description: 'Intelletto brillante che ha scelto la via del male' },
+      { id: 'chaos_lord', name: 'Signore del Caos', description: 'Entità che vuole distruggere l\'ordine naturale' }
     ]
   },
-  scifi: {
+  'noir-thriller': {
     protagonists: [
-      { id: 'space_captain', name: 'Capitano Spaziale', description: 'Leader coraggioso di una nave stellare' },
-      { id: 'android', name: 'Androide Senziente', description: 'IA che lotta per la propria umanità' },
-      { id: 'scientist', name: 'Scienziato Ribelle', description: 'Ricercatore che sfida il sistema' },
-      { id: 'pilot', name: 'Pilota d\'Élite', description: 'Asso del volo spaziale' }
+      { id: 'broken_detective', name: 'Detective Infranto', description: 'Investigatore segnato dal passato, cerca redenzione' },
+      { id: 'noir_journalist', name: 'Giornalista Idealista', description: 'Reporter che scava troppo a fondo nella verità' },
+      { id: 'femme_fatale', name: 'Donna Fatale', description: 'Misteriosa figura con un\'agenda nascosta' },
+      { id: 'ex_cop', name: 'Ex-Poliziotto', description: 'Caduto in disgrazia, ora investigatore privato' }
     ],
     antagonists: [
-      { id: 'ai_overlord', name: 'IA Dominatrice', description: 'Intelligenza artificiale che vuole controllare tutto' },
-      { id: 'corp_ceo', name: 'CEO Corporativo', description: 'Magnate senza scrupoli del futuro' },
-      { id: 'alien_emperor', name: 'Imperatore Alieno', description: 'Entità extraterrestre conquistatrice' },
-      { id: 'mad_scientist', name: 'Scienziato Pazzo', description: 'Genio corrotto dalla propria ambizione' }
+      { id: 'corrupt_commissioner', name: 'Commissario Corrotto', description: 'Alto ufficiale che protegge i criminali' },
+      { id: 'crime_boss', name: 'Boss Criminale', description: 'Mente fredda che controlla la città sotterranea' },
+      { id: 'dirty_politician', name: 'Politico Sporco', description: 'Figura pubblica con segreti mortali' },
+      { id: 'psycho_killer', name: 'Killer Psicopatico', description: 'Assassino metodico con regole proprie' }
     ]
   },
-  horror: {
+  'magical-realism': {
     protagonists: [
-      { id: 'detective', name: 'Detective Tormentato', description: 'Investigatore che segue un caso impossibile' },
-      { id: 'survivor', name: 'Ultimo Sopravvissuto', description: 'Persona comune in circostanze straordinarie' },
-      { id: 'psychic', name: 'Medium', description: 'Persona con abilità paranormali' },
-      { id: 'doctor', name: 'Dottore Scettico', description: 'Scienziato che cerca spiegazioni razionali' }
+      { id: 'memory_keeper', name: 'Custode della Memoria', description: 'Persona che ricorda ciò che altri dimenticano' },
+      { id: 'time_wanderer', name: 'Vagabondo del Tempo', description: 'Vive simultaneamente in epoche diverse' },
+      { id: 'dream_weaver', name: 'Tessitore di Sogni', description: 'Può influenzare la realtà attraverso i sogni' },
+      { id: 'storyteller', name: 'Narratore Magico', description: 'Le sue storie prendono vita letteralmente' }
     ],
     antagonists: [
-      { id: 'ghost', name: 'Entità Soprannaturale', description: 'Spirito vendicativo dal passato' },
-      { id: 'serial_killer', name: 'Assassino Seriale', description: 'Mente criminale con motivi inquietanti' },
-      { id: 'cult_leader', name: 'Leader di Culto', description: 'Carismatico adoratore di potenze oscure' },
-      { id: 'monster', name: 'Creatura', description: 'Essere dall\'origine sconosciuta e terrificante' }
+      { id: 'forgetting_spirit', name: 'Spirito dell\'Oblio', description: 'Entità che cancella ricordi e storie' },
+      { id: 'reality_denier', name: 'Negatore della Realtà', description: 'Vuole sostituire il mondo con la sua visione' },
+      { id: 'time_collector', name: 'Collezionista di Tempo', description: 'Ruba momenti preziosi dalle vite altrui' },
+      { id: 'nightmare_lord', name: 'Signore degli Incubi', description: 'Trasforma i sogni in orrori viventi' }
     ]
   },
-  comedy: {
+  'historical-drama': {
     protagonists: [
-      { id: 'underdog', name: 'Sfigato Simpatico', description: 'Persona comune che affronta situazioni assurde' },
-      { id: 'best_friend', name: 'Amico Fedele', description: 'Spalla comica sempre presente' },
-      { id: 'rebel', name: 'Ribelle Irriverente', description: 'Non rispetta le regole e crea caos' },
-      { id: 'ambitious', name: 'Ambizioso Maldestro', description: 'Ha grandi sogni ma scarsa abilità' }
+      { id: 'noble_knight', name: 'Cavaliere d\'Onore', description: 'Guerriero guidato da ideali in un mondo corrotto' },
+      { id: 'rebel_leader', name: 'Leader Ribelle', description: 'Guida la resistenza contro l\'oppressione' },
+      { id: 'court_spy', name: 'Spia di Corte', description: 'Naviga intrighi politici con astuzia' },
+      { id: 'common_hero', name: 'Eroe Popolano', description: 'Persona umile che diventa simbolo di speranza' }
     ],
     antagonists: [
-      { id: 'boss', name: 'Capo Impossibile', description: 'Superiore esigente e irreasonevole' },
-      { id: 'rival', name: 'Rivale Perfetto', description: 'Competitore che sembra avere sempre successo' },
-      { id: 'bureaucrat', name: 'Burocrate', description: 'Funzionario ossessionato dalle regole' },
-      { id: 'relative', name: 'Parente Invadente', description: 'Familiare che complica la vita del protagonista' }
+      { id: 'tyrant_king', name: 'Re Tiranno', description: 'Sovrano crudele che opprime il popolo' },
+      { id: 'corrupt_cardinal', name: 'Cardinale Corrotto', description: 'Religioso che usa la fede per il potere' },
+      { id: 'foreign_invader', name: 'Invasore Straniero', description: 'Conquistatore spietato di terre lontane' },
+      { id: 'scheming_noble', name: 'Nobile Intrigante', description: 'Aristocratico che trama nell\'ombra' }
     ]
   },
-  mystery: {
+  'psychological-horror': {
     protagonists: [
-      { id: 'detective', name: 'Detective Brillante', description: 'Investigatore con metodi non convenzionali' },
-      { id: 'amateur', name: 'Investigatore Dilettante', description: 'Persona comune coinvolta in un mistero' },
-      { id: 'journalist', name: 'Giornalista Curioso', description: 'Cerca la verità a tutti i costi' },
-      { id: 'witness', name: 'Testimone Inaspettato', description: 'Ha visto qualcosa che non doveva vedere' }
+      { id: 'haunted_psychologist', name: 'Psicologo Tormentato', description: 'Terapeuta che lotta con i propri demoni interiori' },
+      { id: 'paranoid_survivor', name: 'Sopravvissuto Paranoico', description: 'Unico testimone di eventi terrificanti' },
+      { id: 'medium_reluctant', name: 'Medium Riluttante', description: 'Vede i morti ma non vuole questo dono' },
+      { id: 'amnesiac', name: 'Vittima di Amnesia', description: 'Non ricorda il proprio passato terrificante' }
     ],
     antagonists: [
-      { id: 'mastermind', name: 'Mente Criminale', description: 'Genio del crimine con un piano elaborato' },
-      { id: 'corrupt_official', name: 'Funzionario Corrotto', description: 'Persona di potere con segreti da nascondere' },
-      { id: 'false_friend', name: 'Falso Amico', description: 'Traditore nascosto in piena vista' },
-      { id: 'organization', name: 'Organizzazione Segreta', description: 'Gruppo clandestino con fini oscuri' }
+      { id: 'mind_parasite', name: 'Parassita Mentale', description: 'Entità che si nutre della sanità mentale' },
+      { id: 'cult_leader', name: 'Leader di Culto', description: 'Carismatico manipolatore di menti deboli' },
+      { id: 'vengeful_spirit', name: 'Spirito Vendicativo', description: 'Fantasma assetato di giustizia distorta' },
+      { id: 'serial_therapist', name: 'Terapeuta Seriale', description: 'Psicologo che "cura" uccidendo' }
     ]
   },
-  romance: {
+  'cyberpunk': {
     protagonists: [
-      { id: 'dreamer', name: 'Sognatore Romantico', description: 'Crede nell\'amore vero e lo cerca' },
-      { id: 'career_focused', name: 'Carrierista Indipendente', description: 'Concentrato sul lavoro finché l\'amore non irrompe' },
-      { id: 'heartbroken', name: 'Cuore Infranto', description: 'Cerca di ricominciare dopo una delusione' },
-      { id: 'small_town', name: 'Persona di Provincia', description: 'Semplice e genuino con valori profondi' }
+      { id: 'hacker_rebel', name: 'Hacker Ribelle', description: 'Combatte il sistema dall\'interno della rete' },
+      { id: 'cyborg_detective', name: 'Detective Cyborg', description: 'Metà umano, metà macchina, cerca la verità' },
+      { id: 'corpo_runner', name: 'Runner Corporativo', description: 'Ex-dipendente che ora sabota le corporazioni' },
+      { id: 'ai_sympathizer', name: 'Simpatizzante IA', description: 'Umano che lotta per i diritti delle intelligenze artificiali' }
     ],
     antagonists: [
-      { id: 'ex', name: 'Ex Problematico', description: 'Figura dal passato che riappare nei momenti peggiori' },
-      { id: 'love_rival', name: 'Rivale in Amore', description: 'Compete per lo stesso interesse romantico' },
-      { id: 'family', name: 'Famiglia Ostile', description: 'Parenti che ostacolano la relazione' },
-      { id: 'circumstances', name: 'Circostanze Avverse', description: 'Situazioni che mettono alla prova l\'amore' }
+      { id: 'ai_overlord', name: 'IA Dominatrice', description: 'Intelligenza artificiale che vuole sostituire l\'umanità' },
+      { id: 'corpo_ceo', name: 'CEO Corporativo', description: 'Magnate spietato del futuro distopico' },
+      { id: 'mind_hacker', name: 'Hacker Mentale', description: 'Criminale che viola direttamente i cervelli' },
+      { id: 'system_enforcer', name: 'Esecutore del Sistema', description: 'Agente che mantiene l\'ordine oppressivo' }
     ]
   },
-  adventure: {
+  'romantic-drama': {
     protagonists: [
-      { id: 'explorer', name: 'Esploratore Coraggioso', description: 'Alla ricerca di nuovi mondi e tesori' },
-      { id: 'reluctant_hero', name: 'Eroe Riluttante', description: 'Coinvolto nell\'avventura contro la sua volontà' },
-      { id: 'treasure_hunter', name: 'Cacciatore di Tesori', description: 'Alla ricerca di ricchezze leggendarie' },
-      { id: 'young_adventurer', name: 'Giovane Avventuriero', description: 'Entusiasta alla prima grande avventura' }
+      { id: 'passionate_artist', name: 'Artista Appassionato', description: 'Creativo che mette l\'amore sopra ogni cosa' },
+      { id: 'torn_lover', name: 'Amante Diviso', description: 'Deve scegliere tra amore e dovere' },
+      { id: 'second_chance', name: 'Seconda Opportunità', description: 'Cerca di riconquistare un amore perduto' },
+      { id: 'forbidden_love', name: 'Amore Proibito', description: 'Ama qualcuno che non dovrebbe amare' }
     ],
     antagonists: [
-      { id: 'rival_explorer', name: 'Esploratore Rivale', description: 'Vuole arrivare primo alla scoperta' },
-      { id: 'crime_boss', name: 'Signore del Crimine', description: 'Controlla un\'organizzazione malvagia' },
-      { id: 'natural_force', name: 'Forza della Natura', description: 'Un pericolo ambientale o naturale estremo' },
-      { id: 'corrupt_official', name: 'Ufficiale Corrotto', description: 'Abusa del suo potere per ostacolare i protagonisti' }
+      { id: 'jealous_ex', name: 'Ex Geloso', description: 'Precedente partner che non accetta la fine' },
+      { id: 'disapproving_family', name: 'Famiglia Ostile', description: 'Parenti che ostacolano l\'amore' },
+      { id: 'rival_suitor', name: 'Pretendente Rivale', description: 'Compete per lo stesso cuore' },
+      { id: 'social_pressure', name: 'Pressioni Sociali', description: 'Le convenzioni che dividono gli amanti' }
     ]
   },
-  thriller: {
+  'literary-western': {
     protagonists: [
-      { id: 'agent', name: 'Agente Speciale', description: 'Professionista addestrato in missione' },
-      { id: 'civilian', name: 'Civile Coinvolto', description: 'Persona normale in circostanze straordinarie' },
-      { id: 'specialist', name: 'Specialista', description: 'Esperto con abilità uniche richiamate in servizio' },
-      { id: 'fugitive', name: 'Fuggiasco Innocente', description: 'Accusato ingiustamente, cerca di provare la sua innocenza' }
+      { id: 'gunslinger_poet', name: 'Pistolero Filosofo', description: 'Guerriero che riflette sulla natura della giustizia' },
+      { id: 'frontier_sheriff', name: 'Sceriffo di Frontiera', description: 'Porta la legge in terre selvagge' },
+      { id: 'outlaw_hero', name: 'Fuorilegge Nobile', description: 'Criminale con un codice d\'onore' },
+      { id: 'native_warrior', name: 'Guerriero Nativo', description: 'Difende la sua terra e la sua gente' }
     ],
     antagonists: [
-      { id: 'terrorist', name: 'Terrorista', description: 'Estremista con un piano devastante' },
-      { id: 'spy', name: 'Spia Nemica', description: 'Agente infiltrato con un\'agenda segreta' },
-      { id: 'crime_boss', name: 'Boss Criminale', description: 'Controlla un\'organizzazione malvagia' },
-      { id: 'corrupt_insider', name: 'Talpa', description: 'Traditore dall\'interno del sistema' }
+      { id: 'cattle_baron', name: 'Barone del Bestiame', description: 'Ricco proprietario terriero senza scrupoli' },
+      { id: 'corrupt_marshal', name: 'Marshal Corrotto', description: 'Rappresentante della legge che serve solo i ricchi' },
+      { id: 'bandito_leader', name: 'Capo Bandito', description: 'Leader spietato di una banda criminale' },
+      { id: 'army_colonel', name: 'Colonnello Militare', description: 'Ufficiale che impone la volontà del governo' }
     ]
   },
-  // Default options for any genre not explicitly defined
-  default: {
+  'philosophical-scifi': {
     protagonists: [
-      { id: 'hero', name: 'Eroe', description: 'Protagonista con qualità eccezionali' },
-      { id: 'underdog', name: 'Sfavorito', description: 'Affronta difficoltà superiori alle sue capacità' },
-      { id: 'genius', name: 'Genio', description: 'Dotato di intelligenza e capacità straordinarie' },
-      { id: 'everyman', name: 'Persona Comune', description: 'Ordinario in circostanze straordinarie' }
+      { id: 'consciousness_explorer', name: 'Esploratore della Coscienza', description: 'Scienziato che studia la natura della mente' },
+      { id: 'time_philosopher', name: 'Filosofo del Tempo', description: 'Viaggiatore temporale che cerca verità universali' },
+      { id: 'ai_whisperer', name: 'Sussurratore di IA', description: 'Comunica con intelligenze artificiali evolute' },
+      { id: 'reality_architect', name: 'Architetto della Realtà', description: 'Può modificare le leggi fisiche dell\'universo' }
     ],
     antagonists: [
-      { id: 'villain', name: 'Antagonista', description: 'In diretto contrasto con il protagonista' },
-      { id: 'system', name: 'Il Sistema', description: 'Organizzazione, società o istituzione opprimente' },
-      { id: 'rival', name: 'Rivale', description: 'Compete con il protagonista per lo stesso obiettivo' },
-      { id: 'inner_demon', name: 'Demoni Interiori', description: 'Lotta personale e psicologica del protagonista' }
+      { id: 'entropy_lord', name: 'Signore dell\'Entropia', description: 'Entità che accelera il decadimento universale' },
+      { id: 'logic_tyrant', name: 'Tiranno della Logica', description: 'Vuole eliminare l\'irrazionalità umana' },
+      { id: 'reality_virus', name: 'Virus della Realtà', description: 'Corrompe la struttura stessa dell\'esistenza' },
+      { id: 'consciousness_harvester', name: 'Mietitore di Coscienza', description: 'Ruba l\'essenza mentale degli esseri senzienti' }
+    ]
+  },
+  'gothic-mystery': {
+    protagonists: [
+      { id: 'occult_investigator', name: 'Investigatore dell\'Occulto', description: 'Studia misteri soprannaturali con metodo scientifico' },
+      { id: 'cursed_heir', name: 'Erede Maledetto', description: 'Discendente di una famiglia con segreti oscuri' },
+      { id: 'gothic_librarian', name: 'Bibliotecario Gotico', description: 'Custode di conoscenze proibite' },
+      { id: 'medium_investigator', name: 'Medium Investigatore', description: 'Usa abilità psichiche per risolvere crimini' }
+    ],
+    antagonists: [
+      { id: 'ancient_curse', name: 'Maledizione Ancestrale', description: 'Male antico che tormenta una stirpe' },
+      { id: 'vampire_lord', name: 'Signore Vampiro', description: 'Nobile non-morto con secoli di potere' },
+      { id: 'witch_coven', name: 'Congrega di Streghe', description: 'Gruppo di praticanti di magia nera' },
+      { id: 'demon_collector', name: 'Collezionista di Demoni', description: 'Evoca entità infernali per potere terreno' }
     ]
   }
 };
@@ -161,13 +174,21 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
   const [customAntagonist, setCustomAntagonist] = useState('');
   const [showCustom, setShowCustom] = useState(false);
 
-  // Get characters for the selected genre or use default if genre not defined
+  // Get characters for the selected genre
   const getCharacters = () => {
     const genreId = selectedGenre?.id;
-    if (!genreId) return CHARACTERS_BY_GENRE.default;
+    if (!genreId || !CHARACTERS_BY_GENRE[genreId as keyof typeof CHARACTERS_BY_GENRE]) {
+      return {
+        protagonists: [
+          { id: 'generic_hero', name: 'Eroe Generico', description: 'Protagonista classico per questo genere' }
+        ],
+        antagonists: [
+          { id: 'generic_villain', name: 'Antagonista Generico', description: 'Cattivo classico per questo genere' }
+        ]
+      };
+    }
     
-    return CHARACTERS_BY_GENRE[genreId as keyof typeof CHARACTERS_BY_GENRE] || 
-           CHARACTERS_BY_GENRE.default;
+    return CHARACTERS_BY_GENRE[genreId as keyof typeof CHARACTERS_BY_GENRE];
   };
 
   const characters = getCharacters();
@@ -208,7 +229,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
           Scegli i Personaggi
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Seleziona protagonista e antagonista per la tua storia nello stile di {selectedAuthor?.name}.
+          Seleziona protagonista e antagonista specifici per il genere <span className="text-purple-400 font-semibold">{selectedGenre?.name}</span> nello stile di {selectedAuthor?.name}.
         </p>
         <div className="flex items-center justify-center gap-2">
           <Badge variant="secondary">{selectedGenre?.icon} {selectedGenre?.name}</Badge>
@@ -221,7 +242,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
           variant={!showCustom ? "default" : "outline"}
           onClick={() => setShowCustom(false)}
         >
-          Personaggi Predefiniti
+          Personaggi Specifici per {selectedGenre?.name}
         </Button>
         <Button 
           variant={showCustom ? "default" : "outline"}
@@ -238,7 +259,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
           <div>
             <h3 className="text-2xl font-bold mb-4 text-center">
               <Users className="w-6 h-6 inline mr-2" />
-              Protagonisti
+              Protagonisti {selectedGenre?.name}
             </h3>
             <div className="grid gap-4">
               {characters?.protagonists.map((char) => (
@@ -266,7 +287,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
           <div>
             <h3 className="text-2xl font-bold mb-4 text-center">
               <Users className="w-6 h-6 inline mr-2" />
-              Antagonisti
+              Antagonisti {selectedGenre?.name}
             </h3>
             <div className="grid gap-4">
               {characters?.antagonists.map((char) => (
@@ -294,7 +315,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
         <div className="max-w-2xl mx-auto space-y-6">
           <Card className="gradient-dark border-border/50">
             <CardHeader>
-              <CardTitle>Crea i Tuoi Personaggi</CardTitle>
+              <CardTitle>Crea i Tuoi Personaggi per {selectedGenre?.name}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -303,7 +324,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
                   id="protagonist"
                   value={customProtagonist}
                   onChange={(e) => setCustomProtagonist(e.target.value)}
-                  placeholder="Es. Marco il Coraggioso"
+                  placeholder={`Es. Protagonista per ${selectedGenre?.name}`}
                   className="bg-input/50"
                 />
               </div>
@@ -314,7 +335,7 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
                   id="antagonist"
                   value={customAntagonist}
                   onChange={(e) => setCustomAntagonist(e.target.value)}
-                  placeholder="Es. Lord Oscurità"
+                  placeholder={`Es. Antagonista per ${selectedGenre?.name}`}
                   className="bg-input/50"
                 />
               </div>
@@ -339,10 +360,16 @@ const CharacterSelection: React.FC<CharacterSelectionProps> = ({
                 <div>
                   <Badge className="bg-green-500/20 text-green-300">Protagonista</Badge>
                   <p className="font-semibold">{protagonist?.name || customProtagonist}</p>
+                  {protagonist?.description && (
+                    <p className="text-sm text-muted-foreground mt-1">{protagonist.description}</p>
+                  )}
                 </div>
                 <div>
                   <Badge className="bg-red-500/20 text-red-300">Antagonista</Badge>
                   <p className="font-semibold">{antagonist?.name || customAntagonist}</p>
+                  {antagonist?.description && (
+                    <p className="text-sm text-muted-foreground mt-1">{antagonist.description}</p>
+                  )}
                 </div>
               </div>
               <Button 
