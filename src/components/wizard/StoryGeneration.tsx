@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,11 +15,14 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
-// I migliori modelli GRATUITI di OpenRouter per la generazione di storie
-const BEST_FREE_MODELS = [
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'microsoft/phi-3-mini-128k-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
+// Modelli AI specializzati per diversi ruoli
+const SPECIALIZED_MODELS = {
+  architect: 'meta-llama/llama-3.2-3b-instruct:free', // Struttura narrativa
+  writer: 'microsoft/phi-3-mini-128k-instruct:free',   // Scrittura creativa
+  editor: 'mistralai/mistral-7b-instruct:free'         // Revisione e correzione
+};
+
+const FALLBACK_MODELS = [
   'huggingfaceh4/zephyr-7b-beta:free',
   'openchat/openchat-7b:free',
   'google/gemma-7b-it:free'
@@ -37,34 +41,44 @@ const StoryGeneration: React.FC<StoryGenerationProps> = ({
   const [generationProgress, setGenerationProgress] = useState('');
   const { toast } = useToast();
 
-  const generateStoryWithMultipleModels = async (apiKey: string) => {
+  const generateCollaborativeStory = async (apiKey: string) => {
     try {
-      setGenerationProgress('Creando la struttura narrativa...');
+      setGenerationProgress('🏗️ LLM Architetto: Progettando la struttura narrativa...');
       
-      // Step 1: Generate comprehensive story outline
-      const outline = await generateDetailedOutline(apiKey);
+      // Step 1: LLM Architetto crea la struttura dettagliata
+      const narrative = await generateNarrativeStructure(apiKey);
       
-      setGenerationProgress('Generando le scene con continuità narrativa...');
+      setGenerationProgress('✍️ LLM Scrittore: Creando le scene narrative...');
       
-      // Step 2: Generate scenes with narrative continuity
-      const scenes = await generateConnectedScenes(apiKey, outline);
+      // Step 2: LLM Scrittore genera le scene basandosi sulla struttura
+      const rawScenes = await generateCollaborativeScenes(apiKey, narrative);
       
-      setGenerationProgress('Ottimizzando la struttura finale...');
+      setGenerationProgress('📝 LLM Editor: Perfezionando stile e correzioni...');
       
-      // Step 3: Create optimized final story
-      const story = createOptimizedStory(outline, scenes);
+      // Step 3: LLM Editor revisiona e perfeziona ogni scena
+      const polishedScenes = await editAndPolishScenes(apiKey, rawScenes);
       
-      return story;
+      setGenerationProgress('🎨 Generando i prompt visivi ottimizzati...');
+      
+      // Step 4: Genera i prompt per le immagini
+      const scenesWithImages = await addOptimizedImagePrompts(apiKey, polishedScenes);
+      
+      setGenerationProgress('🔧 Assemblando la storia finale...');
+      
+      // Step 5: Crea la storia finale ottimizzata
+      const finalStory = createProfessionalStory(narrative, scenesWithImages);
+      
+      return finalStory;
 
     } catch (error) {
-      console.error('Errore nella generazione multi-modello:', error);
+      console.error('Errore nella generazione collaborativa:', error);
       throw error;
     }
   };
 
-  const generateDetailedOutline = async (apiKey: string) => {
-    const outlinePrompt = `
-Crea una struttura narrativa DETTAGLIATA e COERENTE per una storia in italiano:
+  const generateNarrativeStructure = async (apiKey: string) => {
+    const structurePrompt = `
+Sei un ARCHITETTO NARRATIVO esperto. Crea una struttura narrativa PERFETTA e DETTAGLIATA:
 
 PARAMETRI STORIA:
 - GENERE: ${wizardData.genre?.name} - ${wizardData.genre?.description}
@@ -74,147 +88,95 @@ PARAMETRI STORIA:
 - AMBIENTAZIONE: ${wizardData.setting?.name} - ${wizardData.setting?.description}
 - TRAMA: ${wizardData.plot?.name} - ${wizardData.plot?.description}
 
-REQUISITI STRUTTURALI:
-1. Titolo accattivante e originale
-2. Esattamente 6 scene interconnesse
-3. Arco narrativo completo: introduzione → sviluppo → climax → risoluzione
-4. Ogni scena deve avere 800-1000 parole
-5. Continuità tra personaggi, luoghi e eventi
-6. Evitare assolutamente ripetizioni di dialoghi, azioni o descrizioni
+COMPITO: Crea una MAPPA NARRATIVA DETTAGLIATA con:
 
-FORMATO RICHIESTO:
-TITOLO: [titolo originale]
+TITOLO: [Titolo evocativo e memorabile]
 
-PERSONAGGI_PRINCIPALI:
-- PROTAGONISTA: [nome] - [breve descrizione personalità e aspetto]
-- ANTAGONISTA: [nome] - [breve descrizione personalità e aspetto]
-- ALTRI: [eventuali personaggi secondari importanti]
+ARCO_NARRATIVO:
+TEMA_CENTRALE: [Il tema principale che unisce tutta la storia]
+CONFLITTO_PRINCIPALE: [Il conflitto che guida la narrazione]
+CRESCITA_PROTAGONISTA: [Come evolve il protagonista]
 
-AMBIENTAZIONE_DETTAGLIATA:
-[Descrizione specifica dei luoghi dove si svolge la storia]
+STRUTTURA_6_SCENE:
+SCENA_1: "L'Inizio"
+OBIETTIVO: [Cosa deve accadere]
+MOOD: [Atmosfera emotiva]
+EVENTI_CHIAVE: [3 eventi specifici e dettagliati]
+DIALOGHI_ESSENZIALI: [Tipo di dialoghi necessari]
+COLLEGAMENTO: [Come si collega alla scena 2]
 
-STRUTTURA_NARRATIVA:
-SCENA_1: [titolo specifico]
-OBIETTIVO: [cosa deve accadere in questa scena]
-PERSONAGGI: [chi appare]
-EVENTI_CHIAVE: [3-4 eventi specifici che devono accadere]
-COLLEGAMENTO: [come si collega alla scena successiva]
+SCENA_2: "La Chiamata"
+OBIETTIVO: [Cosa deve accadere]
+MOOD: [Atmosfera emotiva]
+EVENTI_CHIAVE: [3 eventi specifici e dettagliati]
+DIALOGHI_ESSENZIALI: [Tipo di dialoghi necessari]
+COLLEGAMENTO: [Come si collega alla scena 3]
 
-SCENA_2: [titolo specifico]
-OBIETTIVO: [cosa deve accadere in questa scena]
-PERSONAGGI: [chi appare]
-EVENTI_CHIAVE: [3-4 eventi specifici che devono accadere]
-COLLEGAMENTO: [come si collega alla scena successiva]
+[continua per tutte e 6 le scene...]
 
-[continua per tutte e 6 le scene]
+ELEMENTI_RICORRENTI:
+SIMBOLI: [Oggetti/elementi simbolici che ritornano]
+FRASI_CHIAVE: [Frasi che caratterizzano personaggi]
+LUOGHI_SIGNIFICATIVI: [Ambientazioni importanti]
 
-TEMI_RICORRENTI: [3-4 temi che devono apparire nella storia]
-OGGETTI_SIMBOLICI: [oggetti importanti per la trama]
+STILE_NARRATIVO:
+PUNTO_DI_VISTA: [Prima/terza persona, prospettiva]
+TEMPO_VERBALE: [Presente/passato]
+REGISTRO_LINGUISTICO: [Formale/informale/poetico]
+LUNGHEZZA_FRASI: [Brevi/lunghe/miste]
+
+Rispondi SOLO con questa struttura, senza commenti aggiuntivi.
 `;
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'StoryMaster AI'
-      },
-      body: JSON.stringify({
-        model: BEST_FREE_MODELS[0],
-        messages: [
-          {
-            role: 'system',
-            content: 'Sei un esperto architetto narrativo. Crei strutture di storie dettagliate, coerenti e senza ripetizioni. Ogni elemento deve essere unico e contribuire al progresso della trama.'
-          },
-          {
-            role: 'user',
-            content: outlinePrompt
-          }
-        ],
-        temperature: 0.6, // Ridotta per maggiore coerenza
-        max_tokens: 2500,
-        top_p: 0.8
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
+    return await callLLM(apiKey, SPECIALIZED_MODELS.architect, structurePrompt, 'architetto narrativo');
   };
 
-  const generateConnectedScenes = async (apiKey: string, outline: string) => {
+  const generateCollaborativeScenes = async (apiKey: string, narrative: string) => {
     const scenes = [];
     
-    // Extract scene information from outline
-    const sceneMatches = outline.match(/SCENA_\d+:.*?(?=SCENA_\d+:|TEMI_RICORRENTI:|$)/gs) || [];
+    // Estrai le scene dalla struttura narrativa
+    const sceneMatches = narrative.match(/SCENA_\d+:.*?(?=SCENA_\d+:|ELEMENTI_RICORRENTI:|$)/gs) || [];
     
-    console.log(`Generando ${sceneMatches.length} scene interconnesse...`);
-
-    let storyContext = outline; // Mantieni il contesto narrativo
+    console.log(`🎭 Generando ${sceneMatches.length} scene collaborative...`);
 
     for (let i = 0; i < sceneMatches.length; i++) {
-      const sceneOutline = sceneMatches[i];
-      const modelIndex = i % BEST_FREE_MODELS.length;
-      const selectedModel = BEST_FREE_MODELS[modelIndex];
+      const sceneStructure = sceneMatches[i];
       
-      setGenerationProgress(`Scena ${i + 1}/${sceneMatches.length} - Modello: ${selectedModel.split('/')[0]}`);
+      setGenerationProgress(`✍️ LLM Scrittore: Scena ${i + 1}/${sceneMatches.length} - Creazione narrativa...`);
       
       try {
-        // Generate scene with full context
-        const sceneContent = await generateContextualScene(
+        const sceneContent = await generateCreativeScene(
           apiKey, 
-          selectedModel, 
-          sceneOutline, 
-          storyContext, 
-          scenes, // Previous scenes for continuity
+          sceneStructure, 
+          narrative, 
+          scenes, 
           i + 1
         );
         
-        // Generate specific image prompt
-        setGenerationProgress(`Creando prompt visivo per scena ${i + 1}...`);
-        const imagePrompt = await generateImagePrompt(apiKey, sceneContent.content, selectedModel);
-        sceneContent.imagePrompt = imagePrompt;
-        
         scenes.push(sceneContent);
         
-        // Update story context with new scene
-        storyContext += `\n\nSCENA_${i + 1}_GENERATA:\n${sceneContent.content.substring(0, 300)}...`;
+        // Pausa per evitare rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1500));
       } catch (error) {
-        console.error(`Errore nella generazione della scena ${i + 1}:`, error);
+        console.error(`Errore nella scena ${i + 1}:`, error);
         
-        // Smart fallback with different model
+        // Fallback con modello diverso
         try {
-          const fallbackModel = BEST_FREE_MODELS[(i + 2) % BEST_FREE_MODELS.length];
-          const fallbackContent = await generateContextualScene(
+          const fallbackModel = FALLBACK_MODELS[i % FALLBACK_MODELS.length];
+          const fallbackContent = await generateCreativeScene(
             apiKey, 
-            fallbackModel, 
-            sceneOutline, 
-            storyContext, 
+            sceneStructure, 
+            narrative, 
             scenes, 
-            i + 1
+            i + 1,
+            fallbackModel
           );
-          
-          const fallbackImagePrompt = await generateImagePrompt(apiKey, fallbackContent.content, fallbackModel);
-          fallbackContent.imagePrompt = fallbackImagePrompt;
-          
           scenes.push(fallbackContent);
         } catch (fallbackError) {
-          console.error(`Errore anche nel fallback per scena ${i + 1}:`, fallbackError);
-          
-          // Create minimal scene to maintain structure
-          scenes.push({
-            id: `scene-${i + 1}`,
-            title: `Scena ${i + 1}`,
-            content: `[Scena da rigenerare - errore nel modello AI]`,
-            imagePrompt: `${wizardData.genre?.name} scene, ${wizardData.style?.prompt || 'cinematic style'}`
-          });
+          console.error(`Errore fallback scena ${i + 1}:`, fallbackError);
+          // Crea scena placeholder per mantenere struttura
+          scenes.push(createPlaceholderScene(i + 1, sceneStructure));
         }
       }
     }
@@ -222,47 +184,197 @@ OGGETTI_SIMBOLICI: [oggetti importanti per la trama]
     return scenes;
   };
 
-  const generateContextualScene = async (
+  const generateCreativeScene = async (
     apiKey: string, 
-    model: string, 
-    sceneOutline: string, 
-    fullContext: string, 
+    sceneStructure: string, 
+    fullNarrative: string, 
     previousScenes: any[], 
-    sceneNumber: number
+    sceneNumber: number,
+    customModel?: string
   ) => {
-    // Create contextual summary of previous scenes
+    const model = customModel || SPECIALIZED_MODELS.writer;
+    
+    // Crea contesto dalle scene precedenti
     const previousContext = previousScenes.length > 0 
-      ? `SCENE PRECEDENTI (per continuità):\n${previousScenes.map((scene, idx) => 
-          `Scena ${idx + 1}: ${scene.title}\nRiassunto: ${scene.content.substring(0, 200)}...\n`
+      ? `SCENE_PRECEDENTI_GENERATE:\n${previousScenes.map((scene, idx) => 
+          `Scena ${idx + 1}: ${scene.title}\nRiassunto: ${scene.content.substring(0, 150)}...\n`
         ).join('\n')}`
       : 'Prima scena della storia.';
 
-    const contextualPrompt = `
-CONTESTO NARRATIVO COMPLETO:
-${fullContext}
+    const creativePrompt = `
+Sei un SCRITTORE PROFESSIONISTA esperto nel genere ${wizardData.genre?.name}.
+
+STRUTTURA_NARRATIVA_COMPLETA:
+${fullNarrative}
 
 ${previousContext}
 
-SCENA DA SCRIVERE ORA:
-${sceneOutline}
+SCENA_DA_SCRIVERE_ADESSO:
+${sceneStructure}
 
-ISTRUZIONI SPECIFICHE:
-1. Scrivi ESATTAMENTE 800-1000 parole per questa scena
-2. NON ripetere dialoghi, azioni o descrizioni delle scene precedenti
+ISTRUZIONI_CREATIVE:
+1. Scrivi ESATTAMENTE 900-1100 parole per questa scena
+2. Usa lo stile distintivo di ${wizardData.author?.name}
 3. Mantieni PERFETTA continuità con le scene precedenti
-4. Usa lo stile di ${wizardData.author?.name}
-5. Rispetta perfettamente il genere ${wizardData.genre?.name}
-6. Includi dialoghi naturali e descrizioni vivide
-7. Ogni frase deve far progredire la trama
-8. Evita assolutamente frasi generiche o cliché
+4. Includi dialoghi realistici e coinvolgenti
+5. Descrizioni vivide ma non eccessive
+6. Ritmo narrativo appropriato al genere ${wizardData.genre?.name}
+7. ZERO ripetizioni di contenuti precedenti
+8. Punteggiatura e grammatica perfette
 
-FORMATO RICHIESTO:
-TITOLO_SCENA: [titolo specifico della scena]
+STILE_RICHIESTO:
+- Usa il presente narrativo per maggiore immediatezza
+- Alterna descrizioni e dialoghi in modo equilibrato
+- Crea tensione appropriata al genere
+- Caratterizza i personaggi attraverso azioni e parole
+
+FORMATO_RISPOSTA:
+TITOLO_SCENA: [Titolo evocativo specifico]
 
 CONTENUTO:
-[Testo della scena di 800-1000 parole]
+[Testo della scena di 900-1100 parole, scritto in modo professionale]
+
+Scrivi SOLO il titolo e il contenuto, senza note o commenti.
 `;
 
+    const response = await callLLM(apiKey, model, creativePrompt, 'scrittore creativo');
+    return parseSceneContent(response, sceneNumber);
+  };
+
+  const editAndPolishScenes = async (apiKey: string, rawScenes: any[]) => {
+    const polishedScenes = [];
+    
+    for (let i = 0; i < rawScenes.length; i++) {
+      const scene = rawScenes[i];
+      
+      setGenerationProgress(`📝 LLM Editor: Perfezionando scena ${i + 1}/${rawScenes.length}...`);
+      
+      try {
+        const polishedScene = await polishScene(apiKey, scene, i + 1);
+        polishedScenes.push(polishedScene);
+        
+        // Pausa per rate limiting
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+      } catch (error) {
+        console.error(`Errore nell'editing della scena ${i + 1}:`, error);
+        // Usa la scena originale se l'editing fallisce
+        polishedScenes.push(scene);
+      }
+    }
+    
+    return polishedScenes;
+  };
+
+  const polishScene = async (apiKey: string, scene: any, sceneNumber: number) => {
+    const editingPrompt = `
+Sei un EDITOR PROFESSIONALE esperto. Perfeziona questa scena mantenendo il contenuto originale:
+
+SCENA_ORIGINALE:
+Titolo: ${scene.title}
+Contenuto: ${scene.content}
+
+COMPITI_EDITING:
+1. CORREGGERE eventuali errori grammaticali e di punteggiatura
+2. MIGLIORARE la fluidità del testo senza cambiare la trama
+3. OTTIMIZZARE i dialoghi per renderli più naturali
+4. PERFEZIONARE le descrizioni per maggiore impatto
+5. MANTENERE esattamente la stessa storia e personaggi
+6. RISPETTARE il conteggio parole (900-1100)
+
+REGOLE_FERREE:
+- NON cambiare gli eventi della storia
+- NON aggiungere o rimuovere personaggi
+- NON modificare i dialoghi principali, solo migliorarli
+- MANTIENI lo stesso stile narrativo
+- ZERO repetizioni o ridondanze
+
+FORMATO_RISPOSTA:
+TITOLO_PERFEZIONATO: [Titolo ottimizzato se necessario]
+
+CONTENUTO_PERFEZIONATO:
+[Testo della scena perfezionato]
+
+Rispondi SOLO con il titolo e contenuto perfezionati.
+`;
+
+    const response = await callLLM(apiKey, SPECIALIZED_MODELS.editor, editingPrompt, 'editor professionale');
+    return parseSceneContent(response, sceneNumber, scene.title);
+  };
+
+  const addOptimizedImagePrompts = async (apiKey: string, scenes: any[]) => {
+    const scenesWithImages = [];
+    
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      
+      setGenerationProgress(`🎨 Generando prompt visivo per scena ${i + 1}...`);
+      
+      try {
+        const imagePrompt = await generateOptimizedImagePrompt(apiKey, scene);
+        scenesWithImages.push({
+          ...scene,
+          imagePrompt
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (error) {
+        console.error(`Errore prompt immagine scena ${i + 1}:`, error);
+        // Fallback con prompt generico
+        scenesWithImages.push({
+          ...scene,
+          imagePrompt: `${wizardData.genre?.name} scene, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic, high quality'}`
+        });
+      }
+    }
+    
+    return scenesWithImages;
+  };
+
+  const generateOptimizedImagePrompt = async (apiKey: string, scene: any) => {
+    const imagePrompt = `
+Analizza questa scena e crea un prompt PERFETTO per Stable Diffusion:
+
+SCENA: ${scene.title}
+CONTENUTO: ${scene.content.substring(0, 800)}...
+
+PARAMETRI_VISIVI:
+- Genere: ${wizardData.genre?.name}
+- Ambientazione: ${wizardData.setting?.name}
+- Stile: ${wizardData.style?.name}
+
+Crea un prompt in inglese di MAX 150 caratteri che descriva:
+1. La scena specifica con personaggi principali
+2. L'ambientazione e atmosfera
+3. Lo stile visivo scelto
+4. Qualità cinematografica
+
+ESEMPI_RIFERIMENTO:
+- "Dark gothic mansion library, mysterious cloaked figure reading ancient tome, candlelight, cinematic horror atmosphere"
+- "Futuristic cyberpunk street chase, neon lights reflecting on wet asphalt, dramatic action scene, film noir style"
+
+Rispondi SOLO con il prompt in inglese, senza spiegazioni:
+`;
+
+    try {
+      const response = await callLLM(apiKey, SPECIALIZED_MODELS.writer, imagePrompt, 'generatore prompt immagini');
+      let prompt = response.replace(/['"]/g, '').trim();
+      
+      // Aggiungi stile se necessario
+      if (wizardData.style?.prompt && !prompt.includes(wizardData.style.prompt)) {
+        prompt += `, ${wizardData.style.prompt}`;
+      }
+      
+      return prompt.substring(0, 150); // Limita la lunghezza
+      
+    } catch (error) {
+      console.error('Errore generazione prompt immagine:', error);
+      return `${wizardData.genre?.name} scene, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic style'}`;
+    }
+  };
+
+  const callLLM = async (apiKey: string, model: string, prompt: string, role: string) => {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -276,159 +388,87 @@ CONTENUTO:
         messages: [
           {
             role: 'system',
-            content: `Sei uno scrittore professionista specializzato nel genere ${wizardData.genre?.name}. Scrivi scene dettagliate nello stile di ${wizardData.author?.name}. EVITA ASSOLUTAMENTE RIPETIZIONI. Ogni scena deve essere unica e far progredire la storia.`
+            content: `Sei un ${role} professionista. Scrivi sempre in italiano perfetto con grammatica e punteggiatura impeccabili. Segui ESATTAMENTE le istruzioni fornite.`
           },
           {
             role: 'user',
-            content: contextualPrompt
+            content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1800,
+        temperature: role === 'architetto narrativo' ? 0.4 : role === 'editor professionale' ? 0.3 : 0.7,
+        max_tokens: role === 'architetto narrativo' ? 2000 : 1800,
         top_p: 0.85,
-        frequency_penalty: 0.3, // Riduce ripetizioni
+        frequency_penalty: 0.4, // Riduce ripetizioni
         presence_penalty: 0.3   // Incoraggia varietà
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status} - Model: ${model}`);
     }
 
     const data = await response.json();
-    const content = data.choices[0]?.message?.content || '';
-    
-    return parseSceneContentImproved(content, sceneNumber);
+    return data.choices[0]?.message?.content || '';
   };
 
-  const parseSceneContentImproved = (content: string, sceneNumber: number) => {
+  const parseSceneContent = (content: string, sceneNumber: number, fallbackTitle?: string) => {
     const lines = content.split('\n').filter(line => line.trim());
-    let title = `Scena ${sceneNumber}`;
+    let title = fallbackTitle || `Scena ${sceneNumber}`;
     let sceneContent = '';
 
-    // Try to find title
-    const titleMatch = content.match(/TITOLO_SCENA:\s*(.+)/i);
+    // Cerca il titolo
+    const titleMatch = content.match(/TITOLO[_\s]*(?:SCENA|PERFEZIONATO)?:\s*(.+)/i);
     if (titleMatch) {
       title = titleMatch[1].trim();
     }
 
-    // Extract content after CONTENUTO: or use everything if format not followed
-    const contentMatch = content.match(/CONTENUTO:\s*([\s\S]*)/i);
+    // Estrai il contenuto
+    const contentMatch = content.match(/CONTENUTO[_\s]*(?:PERFEZIONATO)?:\s*([\s\S]*)/i);
     if (contentMatch) {
       sceneContent = contentMatch[1].trim();
     } else {
-      // Fallback: remove title line and use rest
+      // Fallback: usa tutto il contenuto escludendo la linea del titolo
       const contentLines = lines.filter(line => 
-        !line.includes('TITOLO_SCENA:') && 
-        !line.includes('CONTENUTO:') &&
-        line.trim().length > 0
+        !line.match(/TITOLO|CONTENUTO/i) && line.trim().length > 0
       );
       sceneContent = contentLines.join('\n').trim();
     }
 
-    // Ensure we have content
+    // Assicurati che ci sia contenuto
     if (!sceneContent || sceneContent.length < 100) {
-      sceneContent = content; // Use original if parsing failed
+      sceneContent = content; // Usa tutto se il parsing fallisce
     }
 
     return {
       id: `scene-${sceneNumber}`,
       title: title,
       content: sceneContent,
-      imagePrompt: '' // Will be filled later
+      imagePrompt: '' // Sarà popolato dopo
     };
   };
 
-  const generateImagePrompt = async (apiKey: string, sceneContent: string, model: string) => {
-    const imagePromptGeneration = `
-Analizza questa scena di una storia e crea un prompt dettagliato per Fooocus/Stable Diffusion in inglese:
-
-SCENA:
-${sceneContent.substring(0, 1000)}...
-
-GENERE: ${wizardData.genre?.name}
-STILE VISIVO: ${wizardData.style?.name} - ${wizardData.style?.description}
-AMBIENTAZIONE: ${wizardData.setting?.name}
-
-Crea un prompt in inglese di massimo 200 caratteri che descriva:
-- La scena specifica con personaggi e azioni
-- L'ambientazione e l'atmosfera
-- Lo stile visivo scelto
-- Dettagli cinematografici appropriati
-
-Esempi di buoni prompt:
-- "Medieval knight in shining armor fighting a dragon in a burning castle courtyard, cinematic lighting, epic fantasy art"
-- "Cyberpunk detective in neon-lit alley investigating crime scene, rain reflections, digital art style"
-- "Victorian mansion library with mysterious figure reading ancient book, candlelight, gothic atmosphere"
-
-Rispondi SOLO con il prompt in inglese, senza spiegazioni:
-`;
-
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'StoryMaster AI'
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            {
-              role: 'system',
-              content: 'Sei un esperto nella creazione di prompt per generazione di immagini AI. Crei prompt concisi ma dettagliati che catturano perfettamente la scena descritta.'
-            },
-            {
-              role: 'user',
-              content: imagePromptGeneration
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 100,
-          top_p: 0.9
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      let prompt = data.choices[0]?.message?.content || '';
-      
-      // Clean up the prompt and add style suffix
-      prompt = prompt.replace(/['"]/g, '').trim();
-      
-      // Add the selected visual style
-      if (wizardData.style?.prompt) {
-        prompt += `, ${wizardData.style.prompt}`;
-      }
-      
-      return prompt;
-      
-    } catch (error) {
-      console.error('Errore nella generazione del prompt immagine:', error);
-      // Fallback to a generic but relevant prompt
-      const fallbackPrompt = `${wizardData.genre?.name} scene with ${wizardData.protagonist?.name}, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic, detailed, high quality'}`;
-      return fallbackPrompt;
-    }
+  const createPlaceholderScene = (sceneNumber: number, sceneStructure: string) => {
+    return {
+      id: `scene-${sceneNumber}`,
+      title: `Scena ${sceneNumber}`,
+      content: `[Scena da rigenerare - ${sceneStructure.substring(0, 100)}...]`,
+      imagePrompt: `${wizardData.genre?.name} scene, ${wizardData.setting?.name}`
+    };
   };
 
-  const createOptimizedStory = (outline: string, scenes: any[]) => {
-    // Extract title from outline
-    const titleMatch = outline.match(/TITOLO:\s*(.+)/);
+  const createProfessionalStory = (narrative: string, scenes: any[]) => {
+    // Estrai il titolo dalla struttura narrativa
+    const titleMatch = narrative.match(/TITOLO:\s*(.+)/);
     const title = titleMatch ? titleMatch[1].trim() : 'La Tua Storia Epica';
 
-    // Calculate total word count accurately
-    let wordCount = 0;
+    // Calcola statistiche accurate
+    let totalWordCount = 0;
     scenes.forEach(scene => {
       const words = scene.content.split(/\s+/).filter((word: string) => word.length > 0);
-      wordCount += words.length;
+      totalWordCount += words.length;
     });
 
-    const estimatedReadingTime = Math.max(1, Math.ceil(wordCount / 200));
+    const estimatedReadingTime = Math.max(1, Math.ceil(totalWordCount / 200));
 
     const story = {
       id: Date.now().toString(),
@@ -436,10 +476,10 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       content: scenes.map(scene => scene.content).join('\n\n'),
       scenes: scenes,
       estimatedReadingTime,
-      wordCount
+      wordCount: totalWordCount
     };
 
-    console.log('Storia ottimizzata creata:', {
+    console.log('Storia professionale completata:', {
       title: story.title,
       scenes: story.scenes.length,
       wordCount: story.wordCount,
@@ -460,24 +500,24 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
     }
 
     setIsGenerating(true);
-    setGenerationProgress('Inizializzazione del sistema narrativo...');
+    setGenerationProgress('🚀 Inizializzazione sistema collaborativo AI...');
     onApiKeySet(apiKey);
     
     try {
-      const story = await generateStoryWithMultipleModels(apiKey);
+      const story = await generateCollaborativeStory(apiKey);
       
       toast({
-        title: "Storia Ottimizzata Generata!",
-        description: `Storia coerente di ${story.scenes.length} scene e ${story.wordCount} parole senza ripetizioni!`,
+        title: "Storia Professionale Completata!",
+        description: `Storia di ${story.scenes.length} scene, ${story.wordCount} parole con qualità editoriale!`,
       });
 
       onStoryGenerated(story);
       
     } catch (error) {
-      console.error('Errore nella generazione:', error);
+      console.error('Errore nella generazione collaborativa:', error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante la generazione della storia. Controlla la tua API key.",
+        description: "Si è verificato un errore durante la generazione collaborativa. Controlla la tua API key.",
         variant: "destructive"
       });
     } finally {
@@ -504,13 +544,13 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-orange-600/20 rounded-full border border-purple-500/30">
           <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="text-sm font-medium">Passo 7 di 7</span>
+          <span className="text-sm font-medium">Sistema Collaborativo AI - 3 LLM Specializzati</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-gradient animate-float">
-          Genera la Tua Storia Ottimizzata
+          Generazione Professionale
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Sistema avanzato anti-ripetizioni con continuità narrativa garantita!
+          3 AI specializzati lavorano insieme: Architetto + Scrittore + Editor per qualità editoriale!
         </p>
       </div>
 
@@ -590,36 +630,55 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
           </div>
           
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-2">🚀 Miglioramenti Anti-Ripetizioni:</h4>
-            <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Struttura narrativa dettagliata pre-generazione
+            <h4 className="font-semibold mb-3">🎭 Sistema Collaborativo AI Professionale:</h4>
+            <div className="grid grid-cols-1 gap-3 text-sm">
+              <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
+                <div>
+                  <div className="font-medium text-blue-300">LLM Architetto</div>
+                  <div className="text-muted-foreground">Progetta struttura narrativa dettagliata</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Continuità tra scene garantita
+              <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
+                <div>
+                  <div className="font-medium text-green-300">LLM Scrittore</div>
+                  <div className="text-muted-foreground">Crea scene coinvolgenti e dialoghi</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                Sistema anti-ripetizioni avanzato
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                Controllo qualità automatico
+              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
+                <div>
+                  <div className="font-medium text-purple-300">LLM Editor</div>
+                  <div className="text-muted-foreground">Perfeziona stile e correzioni</div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-2">Modelli AI Utilizzati:</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-              {BEST_FREE_MODELS.map((model, index) => (
-                <div key={model} className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
-                  {model.split('/')[0]} - {model.split('/')[1]?.split(':')[0]}
-                </div>
-              ))}
+            <h4 className="font-semibold mb-2">🔧 Miglioramenti Qualità:</h4>
+            <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                Grammatica e punteggiatura perfette
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                Struttura narrativa professionale
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                Dialoghi naturali e coinvolgenti
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                Continuità narrativa garantita
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                Zero ripetizioni o ridondanze
+              </div>
             </div>
           </div>
 
@@ -652,12 +711,12 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
             {isGenerating ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generando Storia Ottimizzata...
+                Generazione Collaborativa in Corso...
               </>
             ) : (
               <>
                 <Zap className="w-5 h-5 mr-2" />
-                Genera Storia Senza Ripetizioni (6 scene, 5000+ parole)
+                Genera Storia Professionale (6 scene, qualità editoriale)
               </>
             )}
           </Button>
