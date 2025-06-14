@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +5,29 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ChevronLeft, BookOpen, Edit, Sparkles, Eye } from 'lucide-react';
+import { ChevronLeft, BookOpen, Edit, Sparkles, Eye, Target, Users } from 'lucide-react';
 
+// Trame organizzate per combinazioni di personaggi
+const CHARACTER_BASED_PLOTS = {
+  'detective-killer': [
+    { id: 'serial_hunt', name: 'La Caccia al Serial Killer', description: 'Un detective esperto segue le tracce di un killer spietato in una partita a scacchi mortale attraverso la città' },
+    { id: 'mind_games', name: 'Giochi Mentali', description: 'Il killer sfida direttamente il detective con indizi e messaggi, trasformando la caccia in un duello psicologico' },
+    { id: 'cold_case', name: 'Il Caso Irrisolto', description: 'Un vecchio caso riaperto porta il detective faccia a faccia con un killer che credeva morto' },
+    { id: 'copycat', name: 'Il Copycat', description: 'Un nuovo killer imita i metodi di un assassino già catturato, confondendo il detective che aveva risolto il caso originale' }
+  ],
+  'detective-victim': [
+    { id: 'personal_vendetta', name: 'Vendetta Personale', description: 'Il detective deve proteggere qualcuno che conosce personalmente da un killer determinato' },
+    { id: 'witness_protection', name: 'Testimone in Pericolo', description: 'L\'unico testimone di un crimine è in pericolo e il detective deve tenerlo in vita' },
+    { id: 'family_threat', name: 'Minaccia alla Famiglia', description: 'La famiglia del detective diventa il bersaglio di un killer vendicativo' }
+  ],
+  'killer-victim': [
+    { id: 'perfect_crime', name: 'Il Crimine Perfetto', description: 'Un killer meticoloso pianifica l\'omicidio perfetto, ma la vittima nasconde segreti inaspettati' },
+    { id: 'survival_game', name: 'Gioco di Sopravvivenza', description: 'La vittima scopre di essere nel mirino e deve usare l\'intelligenza per sopravvivere' },
+    { id: 'role_reversal', name: 'Inversione di Ruoli', description: 'La presunta vittima si rivela più pericolosa del killer stesso' }
+  ]
+};
+
+// Trame generiche per genere (fallback)
 const PLOTS_BY_GENRE = {
   fantasy: [
     { id: 'quest', name: 'La Grande Missione', description: 'Un viaggio epico per salvare il mondo da un male antico' },
@@ -15,6 +35,7 @@ const PLOTS_BY_GENRE = {
     { id: 'rebellion', name: 'La Ribellione', description: 'Una lotta contro un tiranno che opprime il regno' },
     { id: 'artifact', name: 'L\'Artefatto Maledetto', description: 'La ricerca di un oggetto magico dai poteri terribili' }
   ],
+  // ... keep existing code (other genre plots)
   scifi: [
     { id: 'invasion', name: 'L\'Invasione Aliena', description: 'La Terra sotto attacco da una forza extraterrestre' },
     { id: 'ai_uprising', name: 'La Rivolta delle IA', description: 'Le macchine si ribellano contro i loro creatori' },
@@ -70,12 +91,48 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
   console.log('PlotSelection - wizardData:', wizardData);
   console.log('PlotSelection - selectedPlot:', selectedPlot);
 
-  // Fallback per garantire che ci siano sempre delle trame disponibili
-  const genreId = wizardData?.genre?.id || 'fantasy';
-  const plots = PLOTS_BY_GENRE[genreId as keyof typeof PLOTS_BY_GENRE] || PLOTS_BY_GENRE.fantasy;
+  // Determina le trame basate sui personaggi
+  const getRelevantPlots = () => {
+    const protagonist = wizardData?.protagonist;
+    const antagonist = wizardData?.antagonist;
+    const genreId = wizardData?.genre?.id || 'fantasy';
 
-  console.log('PlotSelection - genreId:', genreId);
+    // Crea una chiave per la combinazione di personaggi
+    let characterKey = '';
+    if (protagonist && antagonist) {
+      const protType = protagonist.id || protagonist.name?.toLowerCase();
+      const antType = antagonist.id || antagonist.name?.toLowerCase();
+      
+      // Controlla combinazioni specifiche
+      if ((protType?.includes('detective') || protType?.includes('investigator')) && 
+          (antType?.includes('killer') || antType?.includes('assassin') || antType?.includes('murderer'))) {
+        characterKey = 'detective-killer';
+      } else if ((protType?.includes('detective') || protType?.includes('investigator')) && 
+                 (antType?.includes('victim') || antType?.includes('innocent'))) {
+        characterKey = 'detective-victim';
+      } else if ((protType?.includes('killer') || protType?.includes('assassin')) && 
+                 (antType?.includes('victim') || antType?.includes('innocent'))) {
+        characterKey = 'killer-victim';
+      }
+    }
+
+    // Restituisci trame specifiche per i personaggi se disponibili
+    if (characterKey && CHARACTER_BASED_PLOTS[characterKey]) {
+      return CHARACTER_BASED_PLOTS[characterKey];
+    }
+
+    // Fallback alle trame per genere
+    return PLOTS_BY_GENRE[genreId as keyof typeof PLOTS_BY_GENRE] || PLOTS_BY_GENRE.fantasy;
+  };
+
+  const plots = getRelevantPlots();
+  const isCharacterBased = wizardData?.protagonist && wizardData?.antagonist && 
+    ((wizardData.protagonist.id?.includes('detective') && wizardData.antagonist.id?.includes('killer')) ||
+     (wizardData.protagonist.id?.includes('detective') && wizardData.antagonist.id?.includes('victim')) ||
+     (wizardData.protagonist.id?.includes('killer') && wizardData.antagonist.id?.includes('victim')));
+
   console.log('PlotSelection - plots:', plots);
+  console.log('PlotSelection - isCharacterBased:', isCharacterBased);
 
   const handleCustomSubmit = () => {
     if (customPlot) {
@@ -133,7 +190,10 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
           Scegli la Trama
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Quale conflitto centrale guiderà la tua storia in {wizardData?.setting?.name || 'questo mondo'}?
+          {isCharacterBased ? 
+            `Trame specifiche per ${wizardData?.protagonist?.name} vs ${wizardData?.antagonist?.name}` :
+            `Quale conflitto centrale guiderà la tua storia in ${wizardData?.setting?.name || 'questo mondo'}?`
+          }
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {wizardData?.genre && (
@@ -142,15 +202,37 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
           {wizardData?.setting && (
             <Badge variant="outline">{wizardData.setting.name}</Badge>
           )}
+          {isCharacterBased && (
+            <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+              <Target className="w-3 h-3 mr-1" />
+              Trame Personalizzate
+            </Badge>
+          )}
         </div>
       </div>
+
+      {isCharacterBased && (
+        <Card className="gradient-dark border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="w-4 h-4" />
+              <span>
+                Abbiamo selezionato trame specifiche basate sui tuoi personaggi: 
+                <strong className="text-foreground mx-1">{wizardData.protagonist.name}</strong>
+                e
+                <strong className="text-foreground mx-1">{wizardData.antagonist.name}</strong>
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex justify-center gap-4 mb-6">
         <Button 
           variant={!showCustom ? "default" : "outline"}
           onClick={() => setShowCustom(false)}
         >
-          Trame Predefinite
+          {isCharacterBased ? 'Trame Suggerite' : 'Trame Predefinite'}
         </Button>
         <Button 
           variant={showCustom ? "default" : "outline"}
