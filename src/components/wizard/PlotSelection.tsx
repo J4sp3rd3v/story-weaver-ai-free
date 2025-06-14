@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ChevronLeft, BookOpen, Edit, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ChevronLeft, BookOpen, Edit, Sparkles, Eye } from 'lucide-react';
 
 const PLOTS_BY_GENRE = {
   fantasy: [
@@ -39,6 +39,9 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
 }) => {
   const [customPlot, setCustomPlot] = useState('');
   const [showCustom, setShowCustom] = useState(false);
+  const [editingPlot, setEditingPlot] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewingPlot, setViewingPlot] = useState(null);
 
   const plots = PLOTS_BY_GENRE[wizardData.genre?.id as keyof typeof PLOTS_BY_GENRE] || [];
 
@@ -50,6 +53,24 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
         description: customPlot,
         custom: true
       });
+    }
+  };
+
+  const handleViewPlot = (plot: any) => {
+    setViewingPlot(plot);
+    setEditingPlot(plot.description);
+    setDialogOpen(true);
+  };
+
+  const handleSavePlotEdit = () => {
+    if (editingPlot) {
+      const updatedPlot = {
+        ...viewingPlot,
+        description: editingPlot,
+        custom: true
+      };
+      onPlotSelect(updatedPlot);
+      setDialogOpen(false);
     }
   };
 
@@ -118,10 +139,61 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
                 </div>
                 <CardTitle className="text-lg">{plot.name}</CardTitle>
               </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-sm text-muted-foreground">
+              <CardContent className="text-center space-y-3">
+                <p className="text-sm text-muted-foreground line-clamp-2">
                   {plot.description}
                 </p>
+                <Dialog open={dialogOpen && viewingPlot?.id === plot.id} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewPlot(plot);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Visualizza e Modifica
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <BookOpen className="w-5 h-5" />
+                        {plot.name}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="plot-edit">Descrizione della Trama</Label>
+                        <Textarea
+                          id="plot-edit"
+                          value={editingPlot}
+                          onChange={(e) => setEditingPlot(e.target.value)}
+                          className="bg-input/50 min-h-[150px]"
+                          placeholder="Modifica la descrizione della trama..."
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => setDialogOpen(false)}
+                        >
+                          Annulla
+                        </Button>
+                        <Button
+                          onClick={handleSavePlotEdit}
+                          disabled={!editingPlot}
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Salva Modifiche
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           ))}
@@ -164,11 +236,22 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
                 <BookOpen className="w-8 h-8 text-orange-400" />
                 <div>
                   <h3 className="font-semibold">{selectedPlot?.name || 'Trama Personalizzata'}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground line-clamp-3">
                     {selectedPlot?.description || customPlot}
                   </p>
                 </div>
               </div>
+              {selectedPlot && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mb-3"
+                  onClick={() => handleViewPlot(selectedPlot)}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Visualizza Trama Completa
+                </Button>
+              )}
               <Button 
                 onClick={onNext}
                 className="w-full gradient-primary hover:opacity-90 transition-opacity"
