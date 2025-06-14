@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +20,30 @@ const PLOTS_BY_GENRE = {
     { id: 'ai_uprising', name: 'La Rivolta delle IA', description: 'Le macchine si ribellano contro i loro creatori' },
     { id: 'time_paradox', name: 'Il Paradosso Temporale', description: 'Viaggi nel tempo che minacciano la realtà' },
     { id: 'exploration', name: 'L\'Esplorazione Galattica', description: 'La scoperta di nuovi mondi e civiltà' }
+  ],
+  horror: [
+    { id: 'haunted_house', name: 'La Casa Infestata', description: 'Antichi spiriti tormentano una famiglia innocente' },
+    { id: 'monster', name: 'Il Mostro', description: 'Una creatura terrificante minaccia la comunità' },
+    { id: 'curse', name: 'La Maledizione', description: 'Un antico maleficio si risveglia per vendetta' },
+    { id: 'possession', name: 'La Possessione', description: 'Forze demoniache prendono controllo di un innocente' }
+  ],
+  mystery: [
+    { id: 'murder', name: 'L\'Omicidio Misterioso', description: 'Un detective deve risolvere un caso impossibile' },
+    { id: 'disappearance', name: 'La Scomparsa', description: 'Una persona sparisce senza lasciare tracce' },
+    { id: 'conspiracy', name: 'La Cospirazione', description: 'Segreti nascosti vengono alla luce' },
+    { id: 'theft', name: 'Il Grande Furto', description: 'Un\'audace rapina che nasconde motivi più profondi' }
+  ],
+  romance: [
+    { id: 'forbidden_love', name: 'Amore Proibito', description: 'Due anime che non dovrebbero amarsi' },
+    { id: 'second_chance', name: 'Una Seconda Possibilità', description: 'Ex amanti si ritrovano dopo anni' },
+    { id: 'enemies_to_lovers', name: 'Da Nemici ad Amanti', description: 'Rivali che scoprono di amarsi' },
+    { id: 'arranged_marriage', name: 'Matrimonio Combinato', description: 'Un matrimonio d\'interesse che diventa vero amore' }
+  ],
+  adventure: [
+    { id: 'treasure_hunt', name: 'Caccia al Tesoro', description: 'La ricerca di un tesoro leggendario' },
+    { id: 'survival', name: 'Sopravvivenza', description: 'Lotta per sopravvivere in condizioni estreme' },
+    { id: 'exploration', name: 'Esplorazione', description: 'Scoperta di terre inesplorate e pericolose' },
+    { id: 'rescue_mission', name: 'Missione di Salvataggio', description: 'Una corsa contro il tempo per salvare qualcuno' }
   ]
 };
 
@@ -40,10 +65,17 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
   const [customPlot, setCustomPlot] = useState('');
   const [showCustom, setShowCustom] = useState(false);
   const [editingPlot, setEditingPlot] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [viewingPlot, setViewingPlot] = useState(null);
+  const [currentPlotDialog, setCurrentPlotDialog] = useState<any>(null);
 
-  const plots = PLOTS_BY_GENRE[wizardData.genre?.id as keyof typeof PLOTS_BY_GENRE] || [];
+  console.log('PlotSelection - wizardData:', wizardData);
+  console.log('PlotSelection - selectedPlot:', selectedPlot);
+
+  // Fallback per garantire che ci siano sempre delle trame disponibili
+  const genreId = wizardData?.genre?.id || 'fantasy';
+  const plots = PLOTS_BY_GENRE[genreId as keyof typeof PLOTS_BY_GENRE] || PLOTS_BY_GENRE.fantasy;
+
+  console.log('PlotSelection - genreId:', genreId);
+  console.log('PlotSelection - plots:', plots);
 
   const handleCustomSubmit = () => {
     if (customPlot) {
@@ -57,21 +89,25 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
   };
 
   const handleViewPlot = (plot: any) => {
-    setViewingPlot(plot);
+    setCurrentPlotDialog(plot);
     setEditingPlot(plot.description);
-    setDialogOpen(true);
   };
 
   const handleSavePlotEdit = () => {
-    if (editingPlot) {
+    if (editingPlot && currentPlotDialog) {
       const updatedPlot = {
-        ...viewingPlot,
+        ...currentPlotDialog,
         description: editingPlot,
         custom: true
       };
       onPlotSelect(updatedPlot);
-      setDialogOpen(false);
+      setCurrentPlotDialog(null);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setCurrentPlotDialog(null);
+    setEditingPlot('');
   };
 
   return (
@@ -97,11 +133,15 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
           Scegli la Trama
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Quale conflitto centrale guiderà la tua storia in {wizardData.setting?.name}?
+          Quale conflitto centrale guiderà la tua storia in {wizardData?.setting?.name || 'questo mondo'}?
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
-          <Badge variant="secondary">{wizardData.genre?.icon} {wizardData.genre?.name}</Badge>
-          <Badge variant="outline">{wizardData.setting?.name}</Badge>
+          {wizardData?.genre && (
+            <Badge variant="secondary">{wizardData.genre.icon} {wizardData.genre.name}</Badge>
+          )}
+          {wizardData?.setting && (
+            <Badge variant="outline">{wizardData.setting.name}</Badge>
+          )}
         </div>
       </div>
 
@@ -143,57 +183,18 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {plot.description}
                 </p>
-                <Dialog open={dialogOpen && viewingPlot?.id === plot.id} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewPlot(plot);
-                      }}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Visualizza e Modifica
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <BookOpen className="w-5 h-5" />
-                        {plot.name}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="plot-edit">Descrizione della Trama</Label>
-                        <Textarea
-                          id="plot-edit"
-                          value={editingPlot}
-                          onChange={(e) => setEditingPlot(e.target.value)}
-                          className="bg-input/50 min-h-[150px]"
-                          placeholder="Modifica la descrizione della trama..."
-                        />
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="outline"
-                          onClick={() => setDialogOpen(false)}
-                        >
-                          Annulla
-                        </Button>
-                        <Button
-                          onClick={handleSavePlotEdit}
-                          disabled={!editingPlot}
-                        >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Salva Modifiche
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewPlot(plot);
+                  }}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Visualizza e Modifica
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -227,6 +228,45 @@ const PlotSelection: React.FC<PlotSelectionProps> = ({
           </Card>
         </div>
       )}
+
+      {/* Dialog per visualizzare e modificare la trama */}
+      <Dialog open={!!currentPlotDialog} onOpenChange={(open) => !open && handleCloseDialog()}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              {currentPlotDialog?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="plot-edit">Descrizione della Trama</Label>
+              <Textarea
+                id="plot-edit"
+                value={editingPlot}
+                onChange={(e) => setEditingPlot(e.target.value)}
+                className="bg-input/50 min-h-[150px]"
+                placeholder="Modifica la descrizione della trama..."
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleCloseDialog}
+              >
+                Annulla
+              </Button>
+              <Button
+                onClick={handleSavePlotEdit}
+                disabled={!editingPlot}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Salva Modifiche
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {(selectedPlot || customPlot) && (
         <div className="text-center">
