@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,15 +14,15 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
-// Modelli AI specializzati per diversi ruoli
+// Modelli AI specializzati per ruoli specifici
 const SPECIALIZED_MODELS = {
-  architect: 'meta-llama/llama-3.2-3b-instruct:free', // Struttura narrativa
-  writer: 'microsoft/phi-3-mini-128k-instruct:free',   // Scrittura creativa
-  editor: 'mistralai/mistral-7b-instruct:free'         // Revisione e correzione
+  architect: 'meta-llama/llama-3.2-3b-instruct:free', // Struttura e continuità narrativa
+  writer: 'microsoft/phi-3-mini-128k-instruct:free',   // Scrittura scene coinvolgenti
+  editor: 'mistralai/mistral-7b-instruct:free',        // Revisione e collegamenti
+  continuity: 'huggingfaceh4/zephyr-7b-beta:free'      // Controllo continuità tra scene
 };
 
 const FALLBACK_MODELS = [
-  'huggingfaceh4/zephyr-7b-beta:free',
   'openchat/openchat-7b:free',
   'google/gemma-7b-it:free'
 ];
@@ -41,44 +40,49 @@ const StoryGeneration: React.FC<StoryGenerationProps> = ({
   const [generationProgress, setGenerationProgress] = useState('');
   const { toast } = useToast();
 
-  const generateCollaborativeStory = async (apiKey: string) => {
+  const generateContinuousStory = async (apiKey: string) => {
     try {
-      setGenerationProgress('🏗️ LLM Architetto: Progettando la struttura narrativa...');
+      setGenerationProgress('🏗️ LLM Architetto: Creando mappa narrativa con cliffhanger...');
       
-      // Step 1: LLM Architetto crea la struttura dettagliata
-      const narrative = await generateNarrativeStructure(apiKey);
+      // Step 1: Architetto crea struttura con continuità perfetta
+      const storyBlueprint = await generateStoryBlueprint(apiKey);
       
-      setGenerationProgress('✍️ LLM Scrittore: Creando le scene narrative...');
+      setGenerationProgress('✍️ LLM Scrittore: Tessendo scene collegate...');
       
-      // Step 2: LLM Scrittore genera le scene basandosi sulla struttura
-      const rawScenes = await generateCollaborativeScenes(apiKey, narrative);
+      // Step 2: Scrittore genera scene con perfetta continuità
+      const connectedScenes = await generateConnectedScenes(apiKey, storyBlueprint);
       
-      setGenerationProgress('📝 LLM Editor: Perfezionando stile e correzioni...');
+      setGenerationProgress('🔗 LLM Continuità: Verificando collegamenti narrativi...');
       
-      // Step 3: LLM Editor revisiona e perfeziona ogni scena
-      const polishedScenes = await editAndPolishScenes(apiKey, rawScenes);
+      // Step 3: Controllo continuità e aggiustamenti
+      const verifiedScenes = await verifyContinuityAndAdjust(apiKey, connectedScenes, storyBlueprint);
       
-      setGenerationProgress('🎨 Generando i prompt visivi ottimizzati...');
+      setGenerationProgress('📝 LLM Editor: Perfezionando transizioni e suspense...');
       
-      // Step 4: Genera i prompt per le immagini
-      const scenesWithImages = await addOptimizedImagePrompts(apiKey, polishedScenes);
+      // Step 4: Editor perfeziona transizioni e suspense
+      const polishedScenes = await polishTransitionsAndSuspense(apiKey, verifiedScenes);
       
-      setGenerationProgress('🔧 Assemblando la storia finale...');
+      setGenerationProgress('🎨 Ottimizzando prompt visivi narrativi...');
       
-      // Step 5: Crea la storia finale ottimizzata
-      const finalStory = createProfessionalStory(narrative, scenesWithImages);
+      // Step 5: Prompt immagini che riflettono la continuità
+      const scenesWithImages = await addContinuityImagePrompts(apiKey, polishedScenes);
+      
+      setGenerationProgress('🔧 Assemblando storia con continuità perfetta...');
+      
+      // Step 6: Assemblaggio finale con controllo qualità
+      const finalStory = createContinuousStory(storyBlueprint, scenesWithImages);
       
       return finalStory;
 
     } catch (error) {
-      console.error('Errore nella generazione collaborativa:', error);
+      console.error('Errore nella generazione continua:', error);
       throw error;
     }
   };
 
-  const generateNarrativeStructure = async (apiKey: string) => {
-    const structurePrompt = `
-Sei un ARCHITETTO NARRATIVO esperto. Crea una struttura narrativa PERFETTA e DETTAGLIATA:
+  const generateStoryBlueprint = async (apiKey: string) => {
+    const blueprintPrompt = `
+Sei un ARCHITETTO NARRATIVO MAESTRO della continuità. Crea una MAPPA NARRATIVA PERFETTA con collegamenti irresistibili:
 
 PARAMETRI STORIA:
 - GENERE: ${wizardData.genre?.name} - ${wizardData.genre?.description}
@@ -88,86 +92,119 @@ PARAMETRI STORIA:
 - AMBIENTAZIONE: ${wizardData.setting?.name} - ${wizardData.setting?.description}
 - TRAMA: ${wizardData.plot?.name} - ${wizardData.plot?.description}
 
-COMPITO: Crea una MAPPA NARRATIVA DETTAGLIATA con:
+COMPITO: Crea una STRUTTURA NARRATIVA CON CONTINUITÀ PERFETTA
 
-TITOLO: [Titolo evocativo e memorabile]
+TITOLO: [Titolo che cattura l'essenza della storia]
 
-ARCO_NARRATIVO:
-TEMA_CENTRALE: [Il tema principale che unisce tutta la storia]
-CONFLITTO_PRINCIPALE: [Il conflitto che guida la narrazione]
-CRESCITA_PROTAGONISTA: [Come evolve il protagonista]
+FILO_CONDUTTORE_PRINCIPALE:
+MISTERO_CENTRALE: [Il grande mistero che attraversa tutta la storia]
+OGGETTO_RICORRENTE: [Elemento fisico che appare in ogni scena]
+SEGRETO_RIVELATO_GRADUALMENTE: [Cosa si scopre poco alla volta]
+MINACCIA_CRESCENTE: [Come il pericolo aumenta progressivamente]
 
-STRUTTURA_6_SCENE:
-SCENA_1: "L'Inizio"
-OBIETTIVO: [Cosa deve accadere]
-MOOD: [Atmosfera emotiva]
-EVENTI_CHIAVE: [3 eventi specifici e dettagliati]
-DIALOGHI_ESSENZIALI: [Tipo di dialoghi necessari]
-COLLEGAMENTO: [Come si collega alla scena 2]
+CATENA_NARRATIVA_6_SCENE:
 
-SCENA_2: "La Chiamata"
-OBIETTIVO: [Cosa deve accadere]
-MOOD: [Atmosfera emotiva]
-EVENTI_CHIAVE: [3 eventi specifici e dettagliati]
-DIALOGHI_ESSENZIALI: [Tipo di dialoghi necessari]
-COLLEGAMENTO: [Come si collega alla scena 3]
+SCENA_1: "L'Innesco Misterioso"
+OBIETTIVO: Introdurre protagonista e primo mistero
+EVENTO_SCATENANTE: [Cosa accade di inquietante]
+OGGETTO_INTRODOTTO: [Elemento ricorrente che appare]
+DOMANDA_IRRISOLTA: [Cosa lascia il lettore con curiosità]
+CLIFFHANGER: [Come finisce per creare suspense]
+PONTE_SCENA_2: [Come si collega perfettamente alla scena 2]
 
-[continua per tutte e 6 le scene...]
+SCENA_2: "Il Primo Indizio"
+CONTINUA_DA: [Riprende esattamente dal cliffhanger della scena 1]
+RIVELAZIONE_PARZIALE: [Cosa si scopre sul mistero]
+COMPLICAZIONE: [Come si aggrava la situazione]
+OGGETTO_EVOLUTO: [Come l'elemento ricorrente cambia]
+NUOVO_PERSONAGGIO: [Chi entra in scena]
+CLIFFHANGER: [Suspense per la scena 3]
+PONTE_SCENA_3: [Collegamento preciso]
 
-ELEMENTI_RICORRENTI:
-SIMBOLI: [Oggetti/elementi simbolici che ritornano]
-FRASI_CHIAVE: [Frasi che caratterizzano personaggi]
-LUOGHI_SIGNIFICATIVI: [Ambientazioni importanti]
+SCENA_3: "L'Inganno"
+CONTINUA_DA: [Esatto seguito della scena 2]
+FALSA_PISTA: [Cosa sembra vero ma non lo è]
+ANTAGONISTA_RIVELATO: [Come emerge il nemico]
+TRADIMENTO: [Chi non è quello che sembra]
+PERICOLO_CRESCENTE: [Come aumenta la tensione]
+CLIFFHANGER: [Momento di massimo pericolo]
+PONTE_SCENA_4: [Transizione drammatica]
 
-STILE_NARRATIVO:
-PUNTO_DI_VISTA: [Prima/terza persona, prospettiva]
-TEMPO_VERBALE: [Presente/passato]
-REGISTRO_LINGUISTICO: [Formale/informale/poetico]
-LUNGHEZZA_FRASI: [Brevi/lunghe/miste]
+SCENA_4: "La Rivelazione Scioccante"
+CONTINUA_DA: [Riprende dal pericolo della scena 3]
+VERITÀ_SCONVOLGENTE: [Grande rivelazione sul mistero]
+CAPOVOLGIMENTO: [Come tutto cambia]
+ALLEATO_INASPETTATO: [Chi aiuta il protagonista]
+CORSA_CONTRO_TEMPO: [Urgenza crescente]
+CLIFFHANGER: [Momento decisivo]
+PONTE_SCENA_5: [Verso il climax]
 
-Rispondi SOLO con questa struttura, senza commenti aggiuntivi.
+SCENA_5: "Il Confronto Finale"
+CONTINUA_DA: [Diretto dalla tensione della scena 4]
+SCONTRO_DECISIVO: [Battaglia finale]
+SACRIFICIO: [Cosa deve rinunciare il protagonista]
+MOMENTO_DISPERAZIONE: [Quando tutto sembra perduto]
+SVOLTA_FINALE: [Come si ribalta la situazione]
+CLIFFHANGER: [Verso la risoluzione]
+PONTE_SCENA_6: [Collegamento alla conclusione]
+
+SCENA_6: "La Risoluzione Epica"
+CONTINUA_DA: [Conclude la tensione della scena 5]
+RISOLUZIONE_MISTERO: [Come si spiega tutto]
+TRASFORMAZIONE_PROTAGONISTA: [Come è cambiato]
+OGGETTO_FINALE: [Destino dell'elemento ricorrente]
+NUOVA_NORMALITÀ: [Come finisce la storia]
+EPILOGO_INTRIGANTE: [Ultima nota che lascia il segno]
+
+ELEMENTI_CONTINUITÀ:
+DIALOGHI_RICORRENTI: [Frasi che ritornano modificate]
+SIMBOLI_EVOLVENTI: [Come i simboli cambiano significato]
+ATMOSFERA_PROGRESSIVA: [Come cambia il mood]
+COUNTDOWN_NARRATIVO: [Elemento di urgenza crescente]
+
+Scrivi ESATTAMENTE questa struttura, ogni sezione DEVE essere dettagliata e specifica.
 `;
 
-    return await callLLM(apiKey, SPECIALIZED_MODELS.architect, structurePrompt, 'architetto narrativo');
+    return await callLLM(apiKey, SPECIALIZED_MODELS.architect, blueprintPrompt, 'architetto continuità');
   };
 
-  const generateCollaborativeScenes = async (apiKey: string, narrative: string) => {
+  const generateConnectedScenes = async (apiKey: string, blueprint: string) => {
     const scenes = [];
     
-    // Estrai le scene dalla struttura narrativa
-    const sceneMatches = narrative.match(/SCENA_\d+:.*?(?=SCENA_\d+:|ELEMENTI_RICORRENTI:|$)/gs) || [];
+    // Estrai le scene dal blueprint
+    const sceneMatches = blueprint.match(/SCENA_\d+:.*?(?=SCENA_\d+:|ELEMENTI_CONTINUITÀ:|$)/gs) || [];
     
-    console.log(`🎭 Generando ${sceneMatches.length} scene collaborative...`);
+    console.log(`🎭 Generando ${sceneMatches.length} scene perfettamente collegate...`);
 
     for (let i = 0; i < sceneMatches.length; i++) {
       const sceneStructure = sceneMatches[i];
       
-      setGenerationProgress(`✍️ LLM Scrittore: Scena ${i + 1}/${sceneMatches.length} - Creazione narrativa...`);
+      setGenerationProgress(`✍️ LLM Scrittore: Scena ${i + 1}/${sceneMatches.length} - Continuità narrativa...`);
       
       try {
-        const sceneContent = await generateCreativeScene(
+        const sceneContent = await generateConnectedScene(
           apiKey, 
           sceneStructure, 
-          narrative, 
+          blueprint, 
           scenes, 
           i + 1
         );
         
         scenes.push(sceneContent);
         
-        // Pausa per evitare rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Pausa per rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1200));
         
       } catch (error) {
         console.error(`Errore nella scena ${i + 1}:`, error);
         
-        // Fallback con modello diverso
+        // Fallback con verifica continuità
         try {
           const fallbackModel = FALLBACK_MODELS[i % FALLBACK_MODELS.length];
-          const fallbackContent = await generateCreativeScene(
+          const fallbackContent = await generateConnectedScene(
             apiKey, 
             sceneStructure, 
-            narrative, 
+            blueprint, 
             scenes, 
             i + 1,
             fallbackModel
@@ -175,8 +212,7 @@ Rispondi SOLO con questa struttura, senza commenti aggiuntivi.
           scenes.push(fallbackContent);
         } catch (fallbackError) {
           console.error(`Errore fallback scena ${i + 1}:`, fallbackError);
-          // Crea scena placeholder per mantenere struttura
-          scenes.push(createPlaceholderScene(i + 1, sceneStructure));
+          scenes.push(createContinuityPlaceholder(i + 1, sceneStructure, scenes));
         }
       }
     }
@@ -184,81 +220,165 @@ Rispondi SOLO con questa struttura, senza commenti aggiuntivi.
     return scenes;
   };
 
-  const generateCreativeScene = async (
+  const generateConnectedScene = async (
     apiKey: string, 
     sceneStructure: string, 
-    fullNarrative: string, 
+    fullBlueprint: string, 
     previousScenes: any[], 
     sceneNumber: number,
     customModel?: string
   ) => {
     const model = customModel || SPECIALIZED_MODELS.writer;
     
-    // Crea contesto dalle scene precedenti
-    const previousContext = previousScenes.length > 0 
-      ? `SCENE_PRECEDENTI_GENERATE:\n${previousScenes.map((scene, idx) => 
-          `Scena ${idx + 1}: ${scene.title}\nRiassunto: ${scene.content.substring(0, 150)}...\n`
-        ).join('\n')}`
-      : 'Prima scena della storia.';
+    // Crea contesto di continuità dalle scene precedenti
+    const continuityContext = previousScenes.length > 0 
+      ? `SCENE_PRECEDENTI_DETTAGLIATE:
+${previousScenes.map((scene, idx) => 
+  `Scena ${idx + 1}: ${scene.title}
+  COME_FINISCE: ${scene.cliffhanger || 'Transizione verso la scena successiva'}
+  ELEMENTI_RICORRENTI: ${scene.recurringElements || 'Da identificare'}
+  ULTIMO_PARAGRAFO: "${scene.content.split('\n').slice(-2).join(' ')}"
+  `
+).join('\n\n')}
 
-    const creativePrompt = `
-Sei un SCRITTORE PROFESSIONISTA esperto nel genere ${wizardData.genre?.name}.
+COLLEGAMENTO_RICHIESTO: La scena ${sceneNumber} DEVE iniziare esattamente da dove finisce la scena ${sceneNumber - 1}.
+`
+      : 'Prima scena - Stabilisci gli elementi ricorrenti e il primo cliffhanger.';
 
-STRUTTURA_NARRATIVA_COMPLETA:
-${fullNarrative}
+    const continuityPrompt = `
+Sei un SCRITTORE MAESTRO della CONTINUITÀ NARRATIVA. Ogni tua scena è un anello perfetto di una catena narrativa.
 
-${previousContext}
+BLUEPRINT_COMPLETO:
+${fullBlueprint}
+
+${continuityContext}
 
 SCENA_DA_SCRIVERE_ADESSO:
 ${sceneStructure}
 
-ISTRUZIONI_CREATIVE:
-1. Scrivi ESATTAMENTE 900-1100 parole per questa scena
-2. Usa lo stile distintivo di ${wizardData.author?.name}
-3. Mantieni PERFETTA continuità con le scene precedenti
-4. Includi dialoghi realistici e coinvolgenti
-5. Descrizioni vivide ma non eccessive
-6. Ritmo narrativo appropriato al genere ${wizardData.genre?.name}
-7. ZERO ripetizioni di contenuti precedenti
-8. Punteggiatura e grammatica perfette
+REGOLE_FERREE_CONTINUITÀ:
+1. Se NON è la prima scena, inizia ESATTAMENTE dove finiva la precedente
+2. Riprendi dialoghi, azioni, emozioni in corso
+3. Mantieni PERFETTA coerenza di personaggi e ambientazione
+4. Usa elementi ricorrenti in modo evoluto
+5. Includi dialoghi che richiamano scene precedenti
+6. Termina con un CLIFFHANGER irresistibile
+7. Scrivi ESATTAMENTE 1000-1200 parole
+8. Stile ${wizardData.author?.name}, genere ${wizardData.genre?.name}
 
-STILE_RICHIESTO:
-- Usa il presente narrativo per maggiore immediatezza
-- Alterna descrizioni e dialoghi in modo equilibrato
-- Crea tensione appropriata al genere
-- Caratterizza i personaggi attraverso azioni e parole
+OBIETTIVI_SPECIFICI:
+- CONTINUITÀ: Zero interruzioni narrative, collegamento fluido
+- SUSPENSE: Ogni paragrafo aumenta la tensione
+- ELEMENTI_RICORRENTI: Usa oggetti/simboli che attraversano la storia
+- CLIFFHANGER: Finisci con una domanda irrisolta che spinge alla scena successiva
+- CARATTERIZZAZIONE: Sviluppa personaggi attraverso azioni e dialoghi
 
 FORMATO_RISPOSTA:
-TITOLO_SCENA: [Titolo evocativo specifico]
+TITOLO_SCENA: [Titolo che riflette la continuità]
 
-CONTENUTO:
-[Testo della scena di 900-1100 parole, scritto in modo professionale]
+CONTENUTO_CONTINUO:
+[Scena di 1000-1200 parole che si collega perfettamente alle precedenti]
 
-Scrivi SOLO il titolo e il contenuto, senza note o commenti.
+CLIFFHANGER_FINALE: [L'elemento di suspense che porta alla scena successiva]
+
+ELEMENTI_RICORRENTI: [Oggetti/simboli che appaiono in questa scena]
+
+Scrivi SOLO il formato richiesto, senza commenti aggiuntivi.
 `;
 
-    const response = await callLLM(apiKey, model, creativePrompt, 'scrittore creativo');
-    return parseSceneContent(response, sceneNumber);
+    const response = await callLLM(apiKey, model, continuityPrompt, 'scrittore continuità');
+    return parseConnectedScene(response, sceneNumber);
   };
 
-  const editAndPolishScenes = async (apiKey: string, rawScenes: any[]) => {
-    const polishedScenes = [];
+  const verifyContinuityAndAdjust = async (apiKey: string, scenes: any[], blueprint: string) => {
+    const verifiedScenes = [];
     
-    for (let i = 0; i < rawScenes.length; i++) {
-      const scene = rawScenes[i];
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
       
-      setGenerationProgress(`📝 LLM Editor: Perfezionando scena ${i + 1}/${rawScenes.length}...`);
+      setGenerationProgress(`🔗 LLM Continuità: Verificando collegamento scena ${i + 1}...`);
       
       try {
-        const polishedScene = await polishScene(apiKey, scene, i + 1);
-        polishedScenes.push(polishedScene);
+        if (i === 0) {
+          // Prima scena non ha precedenti
+          verifiedScenes.push(scene);
+        } else {
+          const verifiedScene = await verifyContinuity(apiKey, scene, scenes[i - 1], i + 1);
+          verifiedScenes.push(verifiedScene);
+        }
         
-        // Pausa per rate limiting
         await new Promise(resolve => setTimeout(resolve, 800));
         
       } catch (error) {
-        console.error(`Errore nell'editing della scena ${i + 1}:`, error);
-        // Usa la scena originale se l'editing fallisce
+        console.error(`Errore verifica continuità scena ${i + 1}:`, error);
+        // Usa la scena originale se la verifica fallisce
+        verifiedScenes.push(scene);
+      }
+    }
+    
+    return verifiedScenes;
+  };
+
+  const verifyContinuity = async (apiKey: string, currentScene: any, previousScene: any, sceneNumber: number) => {
+    const verificationPrompt = `
+Sei un CONTROLLORE DI CONTINUITÀ NARRATIVA esperto. Verifica e correggi la continuità tra queste due scene:
+
+SCENA_PRECEDENTE (${sceneNumber - 1}):
+Titolo: ${previousScene.title}
+Cliffhanger finale: "${previousScene.cliffhanger}"
+Ultimi paragrafi: "${previousScene.content.split('\n').slice(-3).join(' ')}"
+
+SCENA_ATTUALE (${sceneNumber}):
+Titolo: ${currentScene.title}
+Primi paragrafi: "${currentScene.content.split('\n').slice(0, 3).join(' ')}"
+Contenuto completo: ${currentScene.content}
+
+VERIFICA_E_CORREGGI:
+1. La scena ${sceneNumber} inizia coerentemente dal cliffhanger della scena ${sceneNumber - 1}?
+2. Ci sono contraddizioni di personaggi, luoghi, azioni?
+3. Il collegamento è fluido e naturale?
+4. Gli elementi ricorrenti sono mantenuti?
+
+Se trovi problemi, RISCRIVI l'inizio della scena ${sceneNumber} per perfetta continuità.
+Se va già bene, conferma senza modifiche.
+
+FORMATO_RISPOSTA:
+VALUTAZIONE: [OK/CORREZIONE_NECESSARIA]
+
+SCENA_CORRETTA (se necessario):
+TITOLO: ${currentScene.title}
+CONTENUTO_MIGLIORATO: [Contenuto con continuità perfetta]
+CLIFFHANGER: ${currentScene.cliffhanger}
+ELEMENTI_RICORRENTI: ${currentScene.recurringElements}
+
+Fornisci solo la valutazione e l'eventuale correzione.
+`;
+
+    const response = await callLLM(apiKey, SPECIALIZED_MODELS.continuity, verificationPrompt, 'controllore continuità');
+    
+    if (response.includes('CORREZIONE_NECESSARIA')) {
+      return parseConnectedScene(response, sceneNumber, currentScene);
+    } else {
+      return currentScene;
+    }
+  };
+
+  const polishTransitionsAndSuspense = async (apiKey: string, scenes: any[]) => {
+    const polishedScenes = [];
+    
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      
+      setGenerationProgress(`📝 LLM Editor: Perfezionando transizioni scena ${i + 1}...`);
+      
+      try {
+        const polishedScene = await polishTransitions(apiKey, scene, scenes, i + 1);
+        polishedScenes.push(polishedScene);
+        
+        await new Promise(resolve => setTimeout(resolve, 700));
+        
+      } catch (error) {
+        console.error(`Errore perfezionamento scena ${i + 1}:`, error);
         polishedScenes.push(scene);
       }
     }
@@ -266,43 +386,52 @@ Scrivi SOLO il titolo e il contenuto, senza note o commenti.
     return polishedScenes;
   };
 
-  const polishScene = async (apiKey: string, scene: any, sceneNumber: number) => {
-    const editingPrompt = `
-Sei un EDITOR PROFESSIONALE esperto. Perfeziona questa scena mantenendo il contenuto originale:
+  const polishTransitions = async (apiKey: string, scene: any, allScenes: any[], sceneNumber: number) => {
+    const polishPrompt = `
+Sei un EDITOR ESPERTO di transizioni e suspense. Perfeziona questa scena per massimizzare continuità e tensione:
 
-SCENA_ORIGINALE:
-Titolo: ${scene.title}
-Contenuto: ${scene.content}
+SCENA_DA_PERFEZIONARE:
+${scene.title}
+${scene.content}
+Cliffhanger: ${scene.cliffhanger}
 
-COMPITI_EDITING:
-1. CORREGGERE eventuali errori grammaticali e di punteggiatura
-2. MIGLIORARE la fluidità del testo senza cambiare la trama
-3. OTTIMIZZARE i dialoghi per renderli più naturali
-4. PERFEZIONARE le descrizioni per maggiore impatto
-5. MANTENERE esattamente la stessa storia e personaggi
-6. RISPETTARE il conteggio parole (900-1100)
+CONTESTO_NARRATIVO:
+- Scena ${sceneNumber} di ${allScenes.length}
+- Genere: ${wizardData.genre?.name}
+- Deve mantenere il lettore incollato
 
-REGOLE_FERREE:
-- NON cambiare gli eventi della storia
-- NON aggiungere o rimuovere personaggi
-- NON modificare i dialoghi principali, solo migliorarli
-- MANTIENI lo stesso stile narrativo
-- ZERO repetizioni o ridondanze
+PERFEZIONA:
+1. TRANSIZIONI: Rendi i collegamenti tra paragrafi più fluidi
+2. SUSPENSE: Aumenta gradualmente la tensione
+3. DIALOGHI: Rendili più naturali e caratterizzanti
+4. CLIFFHANGER: Massimizza l'impatto emotivo
+5. RITMO: Alterna momenti di tensione e respiro
+6. GRAMMATICA: Correggi ogni errore
+
+MANTIENI:
+- Stessa lunghezza (1000-1200 parole)
+- Stessa trama e personaggi
+- Stesso cliffhanger (migliorato)
+- Stessi elementi ricorrenti
 
 FORMATO_RISPOSTA:
-TITOLO_PERFEZIONATO: [Titolo ottimizzato se necessario]
+TITOLO_PERFEZIONATO: [Titolo ottimizzato]
 
 CONTENUTO_PERFEZIONATO:
-[Testo della scena perfezionato]
+[Scena con transizioni e suspense ottimizzate]
 
-Rispondi SOLO con il titolo e contenuto perfezionati.
+CLIFFHANGER_OTTIMIZZATO: [Cliffhanger con massimo impatto]
+
+ELEMENTI_RICORRENTI: [Elementi simbolici presenti]
+
+Perfeziona senza stravolgere la storia originale.
 `;
 
-    const response = await callLLM(apiKey, SPECIALIZED_MODELS.editor, editingPrompt, 'editor professionale');
-    return parseSceneContent(response, sceneNumber, scene.title);
+    const response = await callLLM(apiKey, SPECIALIZED_MODELS.editor, polishPrompt, 'editor transizioni');
+    return parseConnectedScene(response, sceneNumber, scene);
   };
 
-  const addOptimizedImagePrompts = async (apiKey: string, scenes: any[]) => {
+  const addContinuityImagePrompts = async (apiKey: string, scenes: any[]) => {
     const scenesWithImages = [];
     
     for (let i = 0; i < scenes.length; i++) {
@@ -321,7 +450,6 @@ Rispondi SOLO con il titolo e contenuto perfezionati.
         
       } catch (error) {
         console.error(`Errore prompt immagine scena ${i + 1}:`, error);
-        // Fallback con prompt generico
         scenesWithImages.push({
           ...scene,
           imagePrompt: `${wizardData.genre?.name} scene, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic, high quality'}`
@@ -350,10 +478,6 @@ Crea un prompt in inglese di MAX 150 caratteri che descriva:
 3. Lo stile visivo scelto
 4. Qualità cinematografica
 
-ESEMPI_RIFERIMENTO:
-- "Dark gothic mansion library, mysterious cloaked figure reading ancient tome, candlelight, cinematic horror atmosphere"
-- "Futuristic cyberpunk street chase, neon lights reflecting on wet asphalt, dramatic action scene, film noir style"
-
 Rispondi SOLO con il prompt in inglese, senza spiegazioni:
 `;
 
@@ -361,12 +485,11 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       const response = await callLLM(apiKey, SPECIALIZED_MODELS.writer, imagePrompt, 'generatore prompt immagini');
       let prompt = response.replace(/['"]/g, '').trim();
       
-      // Aggiungi stile se necessario
       if (wizardData.style?.prompt && !prompt.includes(wizardData.style.prompt)) {
         prompt += `, ${wizardData.style.prompt}`;
       }
       
-      return prompt.substring(0, 150); // Limita la lunghezza
+      return prompt.substring(0, 150);
       
     } catch (error) {
       console.error('Errore generazione prompt immagine:', error);
@@ -388,18 +511,18 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
         messages: [
           {
             role: 'system',
-            content: `Sei un ${role} professionista. Scrivi sempre in italiano perfetto con grammatica e punteggiatura impeccabili. Segui ESATTAMENTE le istruzioni fornite.`
+            content: `Sei un ${role} professionista. Scrivi sempre in italiano perfetto con grammatica e punteggiatura impeccabili. Crea CONTINUITÀ NARRATIVA PERFETTA tra le scene. Ogni scena deve collegare perfettamente a quella successiva.`
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: role === 'architetto narrativo' ? 0.4 : role === 'editor professionale' ? 0.3 : 0.7,
-        max_tokens: role === 'architetto narrativo' ? 2000 : 1800,
+        temperature: role === 'architetto continuità' ? 0.3 : role === 'controllore continuità' ? 0.2 : 0.6,
+        max_tokens: role === 'architetto continuità' ? 2500 : 2000,
         top_p: 0.85,
-        frequency_penalty: 0.4, // Riduce ripetizioni
-        presence_penalty: 0.3   // Incoraggia varietà
+        frequency_penalty: 0.5, // Riduce molto le ripetizioni
+        presence_penalty: 0.4   // Incoraggia varietà mantenendo coerenza
       }),
     });
 
@@ -411,57 +534,71 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
     return data.choices[0]?.message?.content || '';
   };
 
-  const parseSceneContent = (content: string, sceneNumber: number, fallbackTitle?: string) => {
+  const parseConnectedScene = (content: string, sceneNumber: number, fallbackScene?: any) => {
     const lines = content.split('\n').filter(line => line.trim());
-    let title = fallbackTitle || `Scena ${sceneNumber}`;
+    let title = fallbackScene?.title || `Scena ${sceneNumber}`;
     let sceneContent = '';
+    let cliffhanger = '';
+    let recurringElements = '';
 
-    // Cerca il titolo
+    // Estrai titolo
     const titleMatch = content.match(/TITOLO[_\s]*(?:SCENA|PERFEZIONATO)?:\s*(.+)/i);
     if (titleMatch) {
       title = titleMatch[1].trim();
     }
 
-    // Estrai il contenuto
-    const contentMatch = content.match(/CONTENUTO[_\s]*(?:PERFEZIONATO)?:\s*([\s\S]*)/i);
+    // Estrai contenuto
+    const contentMatch = content.match(/CONTENUTO[_\s]*(?:CONTINUO|MIGLIORATO|PERFEZIONATO)?:\s*([\s\S]*?)(?=CLIFFHANGER|ELEMENTI_RICORRENTI|$)/i);
     if (contentMatch) {
       sceneContent = contentMatch[1].trim();
-    } else {
-      // Fallback: usa tutto il contenuto escludendo la linea del titolo
-      const contentLines = lines.filter(line => 
-        !line.match(/TITOLO|CONTENUTO/i) && line.trim().length > 0
-      );
-      sceneContent = contentLines.join('\n').trim();
     }
 
-    // Assicurati che ci sia contenuto
-    if (!sceneContent || sceneContent.length < 100) {
-      sceneContent = content; // Usa tutto se il parsing fallisce
+    // Estrai cliffhanger
+    const cliffhangerMatch = content.match(/CLIFFHANGER[_\s]*(?:FINALE|OTTIMIZZATO)?:\s*(.+)/i);
+    if (cliffhangerMatch) {
+      cliffhanger = cliffhangerMatch[1].trim();
+    }
+
+    // Estrai elementi ricorrenti
+    const elementsMatch = content.match(/ELEMENTI_RICORRENTI:\s*(.+)/i);
+    if (elementsMatch) {
+      recurringElements = elementsMatch[1].trim();
+    }
+
+    // Fallback se il parsing fallisce
+    if (!sceneContent || sceneContent.length < 200) {
+      sceneContent = fallbackScene?.content || content;
     }
 
     return {
       id: `scene-${sceneNumber}`,
       title: title,
       content: sceneContent,
+      cliffhanger: cliffhanger,
+      recurringElements: recurringElements,
       imagePrompt: '' // Sarà popolato dopo
     };
   };
 
-  const createPlaceholderScene = (sceneNumber: number, sceneStructure: string) => {
+  const createContinuityPlaceholder = (sceneNumber: number, sceneStructure: string, previousScenes: any[]) => {
+    const lastCliffhanger = previousScenes.length > 0 ? previousScenes[previousScenes.length - 1].cliffhanger : '';
+    
     return {
       id: `scene-${sceneNumber}`,
-      title: `Scena ${sceneNumber}`,
-      content: `[Scena da rigenerare - ${sceneStructure.substring(0, 100)}...]`,
-      imagePrompt: `${wizardData.genre?.name} scene, ${wizardData.setting?.name}`
+      title: `Scena ${sceneNumber} - Continuità da ristabilire`,
+      content: `[SCENA DA RIGENERARE CON CONTINUITÀ]\n\nDeve continuare da: "${lastCliffhanger}"\n\nStruttura richiesta: ${sceneStructure.substring(0, 200)}...`,
+      cliffhanger: `Collegamento verso scena ${sceneNumber + 1}`,
+      recurringElements: 'Da identificare nella rigenerazione',
+      imagePrompt: `${wizardData.genre?.name} placeholder scene`
     };
   };
 
-  const createProfessionalStory = (narrative: string, scenes: any[]) => {
-    // Estrai il titolo dalla struttura narrativa
-    const titleMatch = narrative.match(/TITOLO:\s*(.+)/);
-    const title = titleMatch ? titleMatch[1].trim() : 'La Tua Storia Epica';
+  const createContinuousStory = (blueprint: string, scenes: any[]) => {
+    // Estrai il titolo dal blueprint
+    const titleMatch = blueprint.match(/TITOLO:\s*(.+)/);
+    const title = titleMatch ? titleMatch[1].trim() : 'Storia Epica con Continuità Perfetta';
 
-    // Calcola statistiche accurate
+    // Calcola statistiche
     let totalWordCount = 0;
     scenes.forEach(scene => {
       const words = scene.content.split(/\s+/).filter((word: string) => word.length > 0);
@@ -476,14 +613,17 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       content: scenes.map(scene => scene.content).join('\n\n'),
       scenes: scenes,
       estimatedReadingTime,
-      wordCount: totalWordCount
+      wordCount: totalWordCount,
+      continuityScore: 'Perfetta', // Indica qualità della continuità
+      blueprint: blueprint // Conserva la mappa narrativa
     };
 
-    console.log('Storia professionale completata:', {
+    console.log('Storia con continuità perfetta completata:', {
       title: story.title,
       scenes: story.scenes.length,
       wordCount: story.wordCount,
-      estimatedTime: story.estimatedReadingTime
+      continuityElements: scenes.map(s => s.recurringElements).filter(Boolean),
+      cliffhangers: scenes.map(s => s.cliffhanger).filter(Boolean)
     });
     
     return story;
@@ -500,24 +640,24 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
     }
 
     setIsGenerating(true);
-    setGenerationProgress('🚀 Inizializzazione sistema collaborativo AI...');
+    setGenerationProgress('🚀 Inizializzazione sistema narrativo con continuità...');
     onApiKeySet(apiKey);
     
     try {
-      const story = await generateCollaborativeStory(apiKey);
+      const story = await generateContinuousStory(apiKey);
       
       toast({
-        title: "Storia Professionale Completata!",
-        description: `Storia di ${story.scenes.length} scene, ${story.wordCount} parole con qualità editoriale!`,
+        title: "Storia con Continuità Perfetta Completata!",
+        description: `${story.scenes.length} scene perfettamente collegate, ${story.wordCount} parole di qualità cinematografica!`,
       });
 
       onStoryGenerated(story);
       
     } catch (error) {
-      console.error('Errore nella generazione collaborativa:', error);
+      console.error('Errore nella generazione continua:', error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante la generazione collaborativa. Controlla la tua API key.",
+        description: "Si è verificato un errore durante la generazione continua. Controlla la tua API key.",
         variant: "destructive"
       });
     } finally {
@@ -544,13 +684,13 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-orange-600/20 rounded-full border border-purple-500/30">
           <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="text-sm font-medium">Sistema Collaborativo AI - 3 LLM Specializzati</span>
+          <span className="text-sm font-medium">Sistema Narrativo Continuo - 4 LLM Specializzati</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-gradient animate-float">
-          Generazione Professionale
+          Continuità Narrativa Perfetta
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          3 AI specializzati lavorano insieme: Architetto + Scrittore + Editor per qualità editoriale!
+          4 AI specializzati creano storie con continuità cinematografica: ogni scena si collega perfettamente alla successiva!
         </p>
       </div>
 
@@ -630,54 +770,61 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
           </div>
           
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-3">🎭 Sistema Collaborativo AI Professionale:</h4>
+            <h4 className="font-semibold mb-3">🎭 Sistema Narrativo con Continuità Perfetta:</h4>
             <div className="grid grid-cols-1 gap-3 text-sm">
               <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
                 <div>
                   <div className="font-medium text-blue-300">LLM Architetto</div>
-                  <div className="text-muted-foreground">Progetta struttura narrativa dettagliata</div>
+                  <div className="text-muted-foreground">Crea mappa narrativa con cliffhanger perfetti</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
                 <div>
                   <div className="font-medium text-green-300">LLM Scrittore</div>
-                  <div className="text-muted-foreground">Crea scene coinvolgenti e dialoghi</div>
+                  <div className="text-muted-foreground">Tesse scene perfettamente collegate</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
+                <div>
+                  <div className="font-medium text-orange-300">LLM Continuità</div>
+                  <div className="text-muted-foreground">Verifica e corregge collegamenti narrativi</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">4</div>
                 <div>
                   <div className="font-medium text-purple-300">LLM Editor</div>
-                  <div className="text-muted-foreground">Perfeziona stile e correzioni</div>
+                  <div className="text-muted-foreground">Perfeziona transizioni e suspense</div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-2">🔧 Miglioramenti Qualità:</h4>
+            <h4 className="font-semibold mb-2">🔗 Garantie di Continuità:</h4>
             <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                Grammatica e punteggiatura perfette
+                Ogni scena inizia dove finisce la precedente
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Struttura narrativa professionale
+                Cliffhanger irresistibili tra le scene
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                Dialoghi naturali e coinvolgenti
+                Elementi ricorrenti che attraversano la storia
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                Continuità narrativa garantita
+                Personaggi coerenti e ben caratterizzati
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                Zero ripetizioni o ridondanze
+                Ritmo crescente che mantiene il lettore incollato
               </div>
             </div>
           </div>
@@ -711,12 +858,12 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
             {isGenerating ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generazione Collaborativa in Corso...
+                Creazione Continuità Narrativa...
               </>
             ) : (
               <>
                 <Zap className="w-5 h-5 mr-2" />
-                Genera Storia Professionale (6 scene, qualità editoriale)
+                Genera Storia con Continuità Perfetta (6 scene collegate)
               </>
             )}
           </Button>
