@@ -59,13 +59,9 @@ const StoryWizard = () => {
     }
   };
 
-  const goToGeneration = () => {
-    setCurrentStep(8);
-  };
-
   const onStoryGenerated = (story: Story) => {
     setGeneratedStory(story);
-    setCurrentStep(9);
+    setCurrentStep(8);
   };
 
   const resetWizard = () => {
@@ -142,21 +138,12 @@ const StoryWizard = () => {
           <StoryGeneration
             wizardData={wizardData}
             onApiKeySet={(apiKey) => updateWizardData({ apiKey })}
-            onGenerate={goToGeneration}
+            onGenerate={() => {}} // Non più necessario
+            onStoryGenerated={onStoryGenerated}
             onPrev={prevStep}
           />
         );
       case 8:
-        return (
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <h2 className="text-2xl font-bold text-gradient mb-2">Generando la tua storia...</h2>
-              <p className="text-muted-foreground">Questo potrebbe richiedere alcuni minuti</p>
-            </div>
-          </div>
-        );
-      case 9:
         return (
           <StoryDisplay
             story={generatedStory!}
