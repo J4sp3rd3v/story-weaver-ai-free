@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,14 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
+const PREMIUM_MODELS = [
+  'openai/gpt-4o-2024-11-20',
+  'anthropic/claude-3.5-sonnet',
+  'google/gemini-pro-1.5',
+  'meta-llama/llama-3.1-70b-instruct',
+  'mistralai/mixtral-8x7b-instruct'
+];
+
 const StoryGeneration: React.FC<StoryGenerationProps> = ({
   wizardData,
   onApiKeySet,
@@ -24,13 +33,37 @@ const StoryGeneration: React.FC<StoryGenerationProps> = ({
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState('');
   const { toast } = useToast();
 
-  const generateStoryContent = async (apiKey: string) => {
+  const generateStoryWithMultipleModels = async (apiKey: string) => {
     try {
-      // Costruisci il prompt basato sui dati del wizard
-      const prompt = `
-Scrivi una storia completa e coinvolgente in italiano con le seguenti caratteristiche:
+      setGenerationProgress('Generando la struttura della storia...');
+      
+      // Step 1: Generate story outline with the best model
+      const outline = await generateStoryOutline(apiKey);
+      
+      setGenerationProgress('Generando le scene dettagliate...');
+      
+      // Step 2: Generate detailed scenes using multiple models
+      const scenes = await generateDetailedScenes(apiKey, outline);
+      
+      setGenerationProgress('Finalizzando la storia...');
+      
+      // Step 3: Create final story object
+      const story = createFinalStory(outline, scenes);
+      
+      return story;
+
+    } catch (error) {
+      console.error('Errore nella generazione multi-modello:', error);
+      throw error;
+    }
+  };
+
+  const generateStoryOutline = async (apiKey: string) => {
+    const outlinePrompt = `
+Crea una struttura dettagliata per una storia di almeno 6-8 scene in italiano:
 
 GENERE: ${wizardData.genre?.name} - ${wizardData.genre?.description}
 STILE AUTORE: ${wizardData.author?.name} - ${wizardData.author?.description}
@@ -38,145 +71,215 @@ PROTAGONISTA: ${wizardData.protagonist?.name} - ${wizardData.protagonist?.descri
 ANTAGONISTA: ${wizardData.antagonist?.name} - ${wizardData.antagonist?.description}
 AMBIENTAZIONE: ${wizardData.setting?.name} - ${wizardData.setting?.description}
 TRAMA: ${wizardData.plot?.name} - ${wizardData.plot?.description}
-STILE VISIVO: ${wizardData.style?.name}
 
-Crea una storia suddivisa in 4-5 scene, ognuna di almeno 400-500 parole.
-Per ogni scena, includi:
-1. Un titolo accattivante
-2. Una descrizione dettagliata e coinvolgente
-3. Un prompt per generare un'immagine della scena (in inglese, stile cinematografico)
+Crea una struttura con:
+- Titolo accattivante
+- 6-8 scene interconnesse che formano una storia completa
+- Ogni scena deve avere: titolo, breve riassunto (3-4 frasi), personaggi coinvolti
+- La storia deve essere di almeno 4000-5000 parole totali per 30 minuti di lettura
+- Assicurati che ci sia continuità narrativa tra le scene
 
-Formato richiesto:
-TITOLO STORIA: [titolo accattivante]
+Formato:
+TITOLO: [titolo]
 
 SCENA 1: [titolo scena]
-[contenuto della scena]
-IMMAGINE: [prompt per immagine in inglese]
+RIASSUNTO: [cosa succede in 3-4 frasi]
+PERSONAGGI: [chi è coinvolto]
 
 SCENA 2: [titolo scena]
-[contenuto della scena]
-IMMAGINE: [prompt per immagine in inglese]
+RIASSUNTO: [cosa succede in 3-4 frasi]
+PERSONAGGI: [chi è coinvolto]
 
 [continua per tutte le scene]
-
-La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama e una conclusione soddisfacente.
 `;
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'StoryMaster AI'
-        },
-        body: JSON.stringify({
-          model: 'meta-llama/llama-3.2-3b-instruct:free',
-          messages: [
-            {
-              role: 'system',
-              content: 'Sei uno scrittore professionista specializzato nella creazione di storie coinvolgenti e dettagliate. Scrivi sempre in italiano con uno stile vivace e descrittivo.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.8,
-          max_tokens: 4000,
-          top_p: 0.9,
-          frequency_penalty: 0.1,
-          presence_penalty: 0.1
-        }),
-      });
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'StoryMaster AI'
+      },
+      body: JSON.stringify({
+        model: PREMIUM_MODELS[0], // Use best model for outline
+        messages: [
+          {
+            role: 'system',
+            content: 'Sei un esperto creatore di trame e strutture narrative. Crei storie ben strutturate e coinvolgenti con archi narrativi completi.'
+          },
+          {
+            role: 'user',
+            content: outlinePrompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        top_p: 0.9
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const storyContent = data.choices[0]?.message?.content || '';
-
-      if (!storyContent) {
-        throw new Error('Contenuto della storia vuoto');
-      }
-
-      // Parsa il contenuto della storia
-      const story = parseStoryContent(storyContent);
-      return story;
-
-    } catch (error) {
-      console.error('Errore nella generazione della storia:', error);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
   };
 
-  const parseStoryContent = (content: string) => {
-    console.log('Parsing story content:', content);
-    
-    const lines = content.split('\n');
-    let title = 'La Tua Storia Epica';
+  const generateDetailedScenes = async (apiKey: string, outline: string) => {
     const scenes = [];
-    let currentScene = null;
-    let wordCount = 0;
+    const sceneMatches = outline.match(/SCENA \d+:.*?(?=SCENA \d+:|$)/gs) || [];
+    
+    console.log(`Generando ${sceneMatches.length} scene dettagliate...`);
+
+    for (let i = 0; i < sceneMatches.length; i++) {
+      const sceneOutline = sceneMatches[i];
+      const modelIndex = i % PREMIUM_MODELS.length;
+      const selectedModel = PREMIUM_MODELS[modelIndex];
+      
+      setGenerationProgress(`Generando scena ${i + 1} di ${sceneMatches.length} con ${selectedModel.split('/')[0]}...`);
+      
+      try {
+        const sceneContent = await generateSingleScene(apiKey, selectedModel, sceneOutline, outline, i + 1);
+        scenes.push(sceneContent);
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error(`Errore nella generazione della scena ${i + 1}:`, error);
+        // Fallback to a simpler model or continue
+        try {
+          const fallbackContent = await generateSingleScene(apiKey, 'meta-llama/llama-3.1-70b-instruct', sceneOutline, outline, i + 1);
+          scenes.push(fallbackContent);
+        } catch (fallbackError) {
+          console.error(`Errore anche nel fallback per scena ${i + 1}:`, fallbackError);
+        }
+      }
+    }
+
+    return scenes;
+  };
+
+  const generateSingleScene = async (apiKey: string, model: string, sceneOutline: string, fullOutline: string, sceneNumber: number) => {
+    const scenePrompt = `
+Basandoti su questa struttura narrativa completa:
+${fullOutline}
+
+Scrivi in dettaglio questa specifica scena:
+${sceneOutline}
+
+Requisiti:
+- Scrivi almeno 600-800 parole per questa scena
+- Mantieni coerenza con l'intera storia
+- Include dialoghi vivaci e descrizioni dettagliate
+- Usa lo stile di ${wizardData.author?.name}
+- Mantieni il tono del genere ${wizardData.genre?.name}
+- Assicurati che la scena si colleghi bene alle altre
+- Includi un prompt per immagine cinematografica in inglese alla fine
+
+Formato:
+TITOLO_SCENA: [titolo della scena]
+CONTENUTO: [contenuto dettagliato di 600-800 parole]
+IMMAGINE: [prompt cinematografico in inglese]
+`;
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'StoryMaster AI'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: `Sei uno scrittore professionista nel genere ${wizardData.genre?.name}. Scrivi scene dettagliate e coinvolgenti nello stile di ${wizardData.author?.name}.`
+          },
+          {
+            role: 'user',
+            content: scenePrompt
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 1500,
+        top_p: 0.9
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content || '';
+    
+    return parseSceneContent(content, sceneNumber);
+  };
+
+  const parseSceneContent = (content: string, sceneNumber: number) => {
+    const lines = content.split('\n');
+    let title = `Scena ${sceneNumber}`;
+    let sceneContent = '';
+    let imagePrompt = 'A dramatic cinematic scene, high quality, professional lighting';
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      if (line.startsWith('TITOLO STORIA:')) {
-        title = line.replace('TITOLO STORIA:', '').trim();
-      } else if (line.startsWith('SCENA ')) {
-        if (currentScene) {
-          scenes.push(currentScene);
+      if (line.startsWith('TITOLO_SCENA:')) {
+        title = line.replace('TITOLO_SCENA:', '').trim();
+      } else if (line.startsWith('CONTENUTO:')) {
+        // Gather all content lines
+        for (let j = i + 1; j < lines.length; j++) {
+          if (lines[j].trim().startsWith('IMMAGINE:')) {
+            break;
+          }
+          sceneContent += lines[j] + '\n';
         }
-        currentScene = {
-          id: `scene-${scenes.length + 1}`,
-          title: line.replace(/^SCENA \d+:\s*/, '').trim(),
-          content: '',
-          imagePrompt: ''
-        };
       } else if (line.startsWith('IMMAGINE:')) {
-        if (currentScene) {
-          currentScene.imagePrompt = line.replace('IMMAGINE:', '').trim();
-        }
-      } else if (line && currentScene && !line.startsWith('SCENA ')) {
-        if (!line.startsWith('IMMAGINE:')) {
-          currentScene.content += line + '\n';
-        }
+        imagePrompt = line.replace('IMMAGINE:', '').trim();
       }
     }
 
-    if (currentScene) {
-      scenes.push(currentScene);
+    // If parsing failed, use the whole content
+    if (!sceneContent.trim()) {
+      sceneContent = content;
     }
 
-    // Ensure we have at least one scene
-    if (scenes.length === 0) {
-      scenes.push({
-        id: 'scene-1',
-        title: 'La Storia',
-        content: content || 'Una storia è stata generata ma non è stata possibile analizzarla correttamente.',
-        imagePrompt: 'A dramatic scene from a story, cinematic lighting, high quality'
-      });
-    }
+    return {
+      id: `scene-${sceneNumber}`,
+      title: title,
+      content: sceneContent.trim(),
+      imagePrompt: imagePrompt
+    };
+  };
 
-    // Calculate word count
+  const createFinalStory = (outline: string, scenes: any[]) => {
+    // Extract title from outline
+    const titleMatch = outline.match(/TITOLO:\s*(.+)/);
+    const title = titleMatch ? titleMatch[1].trim() : 'La Tua Storia Epica';
+
+    // Calculate total word count
+    let wordCount = 0;
     scenes.forEach(scene => {
-      wordCount += scene.content.split(' ').filter(word => word.length > 0).length;
+      wordCount += scene.content.split(' ').filter((word: string) => word.length > 0).length;
     });
 
     const estimatedReadingTime = Math.max(1, Math.ceil(wordCount / 200));
 
     const story = {
       id: Date.now().toString(),
-      title: title || 'La Tua Storia Epica',
-      content: content,
-      scenes,
+      title: title,
+      content: scenes.map(scene => scene.content).join('\n\n'),
+      scenes: scenes,
       estimatedReadingTime,
       wordCount
     };
 
-    console.log('Parsed story:', story);
+    console.log('Storia finale creata:', story);
     return story;
   };
 
@@ -191,14 +294,15 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
     }
 
     setIsGenerating(true);
+    setGenerationProgress('Inizializzazione...');
     onApiKeySet(apiKey);
     
     try {
-      const story = await generateStoryContent(apiKey);
+      const story = await generateStoryWithMultipleModels(apiKey);
       
       toast({
-        title: "Storia Generata!",
-        description: "La tua storia epica è pronta!",
+        title: "Storia Epica Generata!",
+        description: `Storia completa di ${story.scenes.length} scene e ${story.wordCount} parole!`,
       });
 
       onStoryGenerated(story);
@@ -212,6 +316,7 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
       });
     } finally {
       setIsGenerating(false);
+      setGenerationProgress('');
     }
   };
 
@@ -236,10 +341,10 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
           <span className="text-sm font-medium">Passo 7 di 7</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-gradient animate-float">
-          Genera la Tua Storia
+          Genera la Tua Storia Epica
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Inserisci la tua API Key di OpenRouter per generare una storia epica!
+          Utilizza i migliori modelli AI per creare una storia di 6-8 scene interconnesse!
         </p>
       </div>
 
@@ -319,6 +424,18 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
           </div>
           
           <div className="p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-semibold mb-2">Modelli Premium Utilizzati:</h4>
+            <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+              {PREMIUM_MODELS.map((model, index) => (
+                <div key={model} className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-orange-500 rounded-full"></div>
+                  {model.split('/')[0]}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-4 bg-muted/50 rounded-lg">
             <h4 className="font-semibold mb-2">Come ottenere la tua API Key:</h4>
             <ol className="text-sm text-muted-foreground space-y-1">
               <li>1. Vai su <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">openrouter.ai</a></li>
@@ -328,6 +445,15 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
               <li>5. Incolla la chiave qui sopra</li>
             </ol>
           </div>
+
+          {generationProgress && (
+            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">{generationProgress}</span>
+              </div>
+            </div>
+          )}
 
           <Button 
             onClick={handleGenerate}
@@ -343,7 +469,7 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
             ) : (
               <>
                 <Zap className="w-5 h-5 mr-2" />
-                Genera Storia Epica (≈30 min di lettura)
+                Genera Storia Epica (6-8 scene, 30+ min lettura)
               </>
             )}
           </Button>
