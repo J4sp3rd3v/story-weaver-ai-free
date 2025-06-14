@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,12 +14,14 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
-const PREMIUM_MODELS = [
-  'openai/gpt-4o-2024-11-20',
-  'anthropic/claude-3.5-sonnet',
-  'google/gemini-pro-1.5',
-  'meta-llama/llama-3.1-70b-instruct',
-  'mistralai/mixtral-8x7b-instruct'
+// I migliori modelli GRATUITI di OpenRouter per la generazione di storie
+const BEST_FREE_MODELS = [
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'microsoft/phi-3-mini-128k-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
+  'huggingfaceh4/zephyr-7b-beta:free',
+  'openchat/openchat-7b:free',
+  'google/gemma-7b-it:free'
 ];
 
 const StoryGeneration: React.FC<StoryGenerationProps> = ({
@@ -40,12 +41,12 @@ const StoryGeneration: React.FC<StoryGenerationProps> = ({
     try {
       setGenerationProgress('Generando la struttura della storia...');
       
-      // Step 1: Generate story outline with the best model
+      // Step 1: Generate story outline with the best free model
       const outline = await generateStoryOutline(apiKey);
       
       setGenerationProgress('Generando le scene dettagliate...');
       
-      // Step 2: Generate detailed scenes using multiple models
+      // Step 2: Generate detailed scenes using multiple free models
       const scenes = await generateDetailedScenes(apiKey, outline);
       
       setGenerationProgress('Finalizzando la storia...');
@@ -102,7 +103,7 @@ PERSONAGGI: [chi è coinvolto]
         'X-Title': 'StoryMaster AI'
       },
       body: JSON.stringify({
-        model: PREMIUM_MODELS[0], // Use best model for outline
+        model: BEST_FREE_MODELS[0], // Use best free model for outline
         messages: [
           {
             role: 'system',
@@ -135,8 +136,8 @@ PERSONAGGI: [chi è coinvolto]
 
     for (let i = 0; i < sceneMatches.length; i++) {
       const sceneOutline = sceneMatches[i];
-      const modelIndex = i % PREMIUM_MODELS.length;
-      const selectedModel = PREMIUM_MODELS[modelIndex];
+      const modelIndex = i % BEST_FREE_MODELS.length;
+      const selectedModel = BEST_FREE_MODELS[modelIndex];
       
       setGenerationProgress(`Generando scena ${i + 1} di ${sceneMatches.length} con ${selectedModel.split('/')[0]}...`);
       
@@ -148,9 +149,10 @@ PERSONAGGI: [chi è coinvolto]
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         console.error(`Errore nella generazione della scena ${i + 1}:`, error);
-        // Fallback to a simpler model or continue
+        // Fallback to another free model
         try {
-          const fallbackContent = await generateSingleScene(apiKey, 'meta-llama/llama-3.1-70b-instruct', sceneOutline, outline, i + 1);
+          const fallbackModel = BEST_FREE_MODELS[(i + 1) % BEST_FREE_MODELS.length];
+          const fallbackContent = await generateSingleScene(apiKey, fallbackModel, sceneOutline, outline, i + 1);
           scenes.push(fallbackContent);
         } catch (fallbackError) {
           console.error(`Errore anche nel fallback per scena ${i + 1}:`, fallbackError);
@@ -344,7 +346,7 @@ IMMAGINE: [prompt cinematografico in inglese]
           Genera la Tua Storia Epica
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Utilizza i migliori modelli AI per creare una storia di 6-8 scene interconnesse!
+          Utilizza i migliori modelli AI gratuiti per creare una storia di 6-8 scene interconnesse!
         </p>
       </div>
 
@@ -424,12 +426,12 @@ IMMAGINE: [prompt cinematografico in inglese]
           </div>
           
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-2">Modelli Premium Utilizzati:</h4>
+            <h4 className="font-semibold mb-2">Migliori Modelli Gratuiti Utilizzati:</h4>
             <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-              {PREMIUM_MODELS.map((model, index) => (
+              {BEST_FREE_MODELS.map((model, index) => (
                 <div key={model} className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-orange-500 rounded-full"></div>
-                  {model.split('/')[0]}
+                  <div className="w-2 h-2 bg-gradient-to-r from-green-500 to-blue-500 rounded-full"></div>
+                  {model.split('/')[0]} - {model.split('/')[1]?.split(':')[0]}
                 </div>
               ))}
             </div>
