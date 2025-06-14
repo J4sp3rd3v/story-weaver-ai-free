@@ -143,6 +143,12 @@ PERSONAGGI: [chi è coinvolto]
       
       try {
         const sceneContent = await generateSingleScene(apiKey, selectedModel, sceneOutline, outline, i + 1);
+        
+        // Generate specific image prompt for this scene
+        setGenerationProgress(`Generando prompt visivo per scena ${i + 1}...`);
+        const imagePrompt = await generateImagePrompt(apiKey, sceneContent.content, selectedModel);
+        sceneContent.imagePrompt = imagePrompt;
+        
         scenes.push(sceneContent);
         
         // Small delay to avoid rate limiting
@@ -153,6 +159,11 @@ PERSONAGGI: [chi è coinvolto]
         try {
           const fallbackModel = BEST_FREE_MODELS[(i + 1) % BEST_FREE_MODELS.length];
           const fallbackContent = await generateSingleScene(apiKey, fallbackModel, sceneOutline, outline, i + 1);
+          
+          // Generate image prompt for fallback content too
+          const fallbackImagePrompt = await generateImagePrompt(apiKey, fallbackContent.content, fallbackModel);
+          fallbackContent.imagePrompt = fallbackImagePrompt;
+          
           scenes.push(fallbackContent);
         } catch (fallbackError) {
           console.error(`Errore anche nel fallback per scena ${i + 1}:`, fallbackError);
@@ -178,12 +189,11 @@ Requisiti:
 - Usa lo stile di ${wizardData.author?.name}
 - Mantieni il tono del genere ${wizardData.genre?.name}
 - Assicurati che la scena si colleghi bene alle altre
-- Includi un prompt per immagine cinematografica in inglese alla fine
+- Descrivi accuratamente l'ambientazione, i personaggi e le azioni
 
 Formato:
 TITOLO_SCENA: [titolo della scena]
-CONTENUTO: [contenuto dettagliato di 600-800 parole]
-IMMAGINE: [prompt cinematografico in inglese]
+CONTENUTO: [contenuto dettagliato di 600-800 parole con descrizioni precise di luoghi, personaggi, azioni e atmosfera]
 `;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -222,11 +232,87 @@ IMMAGINE: [prompt cinematografico in inglese]
     return parseSceneContent(content, sceneNumber);
   };
 
+  const generateImagePrompt = async (apiKey: string, sceneContent: string, model: string) => {
+    const imagePromptGeneration = `
+Analizza questa scena di una storia e crea un prompt dettagliato per Fooocus/Stable Diffusion in inglese:
+
+SCENA:
+${sceneContent.substring(0, 1000)}...
+
+GENERE: ${wizardData.genre?.name}
+STILE VISIVO: ${wizardData.style?.name} - ${wizardData.style?.description}
+AMBIENTAZIONE: ${wizardData.setting?.name}
+
+Crea un prompt in inglese di massimo 200 caratteri che descriva:
+- La scena specifica con personaggi e azioni
+- L'ambientazione e l'atmosfera
+- Lo stile visivo scelto
+- Dettagli cinematografici appropriati
+
+Esempi di buoni prompt:
+- "Medieval knight in shining armor fighting a dragon in a burning castle courtyard, cinematic lighting, epic fantasy art"
+- "Cyberpunk detective in neon-lit alley investigating crime scene, rain reflections, digital art style"
+- "Victorian mansion library with mysterious figure reading ancient book, candlelight, gothic atmosphere"
+
+Rispondi SOLO con il prompt in inglese, senza spiegazioni:
+`;
+
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'StoryMaster AI'
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'Sei un esperto nella creazione di prompt per generazione di immagini AI. Crei prompt concisi ma dettagliati che catturano perfettamente la scena descritta.'
+            },
+            {
+              role: 'user',
+              content: imagePromptGeneration
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 100,
+          top_p: 0.9
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let prompt = data.choices[0]?.message?.content || '';
+      
+      // Clean up the prompt and add style suffix
+      prompt = prompt.replace(/['"]/g, '').trim();
+      
+      // Add the selected visual style
+      if (wizardData.style?.prompt) {
+        prompt += `, ${wizardData.style.prompt}`;
+      }
+      
+      return prompt;
+      
+    } catch (error) {
+      console.error('Errore nella generazione del prompt immagine:', error);
+      // Fallback to a generic but relevant prompt
+      const fallbackPrompt = `${wizardData.genre?.name} scene with ${wizardData.protagonist?.name}, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic, detailed, high quality'}`;
+      return fallbackPrompt;
+    }
+  };
+
   const parseSceneContent = (content: string, sceneNumber: number) => {
     const lines = content.split('\n');
     let title = `Scena ${sceneNumber}`;
     let sceneContent = '';
-    let imagePrompt = 'A dramatic cinematic scene, high quality, professional lighting';
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -236,13 +322,9 @@ IMMAGINE: [prompt cinematografico in inglese]
       } else if (line.startsWith('CONTENUTO:')) {
         // Gather all content lines
         for (let j = i + 1; j < lines.length; j++) {
-          if (lines[j].trim().startsWith('IMMAGINE:')) {
-            break;
-          }
           sceneContent += lines[j] + '\n';
         }
-      } else if (line.startsWith('IMMAGINE:')) {
-        imagePrompt = line.replace('IMMAGINE:', '').trim();
+        break;
       }
     }
 
@@ -255,7 +337,7 @@ IMMAGINE: [prompt cinematografico in inglese]
       id: `scene-${sceneNumber}`,
       title: title,
       content: sceneContent.trim(),
-      imagePrompt: imagePrompt
+      imagePrompt: '' // Will be filled by generateImagePrompt
     };
   };
 
