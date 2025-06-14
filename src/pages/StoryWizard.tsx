@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import GenreSelection from '@/components/wizard/GenreSelection';
-import AuthorSelection from '@/components/wizard/AuthorSelection';
+import ProfessionalAuthorSelection from '@/components/wizard/ProfessionalAuthorSelection';
 import CharacterSelection from '@/components/wizard/CharacterSelection';
 import SettingSelection from '@/components/wizard/SettingSelection';
 import PlotSelection from '@/components/wizard/PlotSelection';
@@ -83,7 +83,7 @@ const StoryWizard = () => {
         );
       case 2:
         return (
-          <AuthorSelection
+          <ProfessionalAuthorSelection
             selectedGenre={wizardData.genre}
             selectedAuthor={wizardData.author}
             onAuthorSelect={(author) => updateWizardData({ author })}
