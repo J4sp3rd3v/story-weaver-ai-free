@@ -60,6 +60,7 @@ const StoryWizard = () => {
   };
 
   const onStoryGenerated = (story: Story) => {
+    console.log('Story generated:', story);
     setGeneratedStory(story);
     setCurrentStep(8);
   };
@@ -144,9 +145,28 @@ const StoryWizard = () => {
           />
         );
       case 8:
+        // Only render StoryDisplay if we have a valid story with required properties
+        if (!generatedStory || !generatedStory.title || !generatedStory.scenes) {
+          console.error('Story data is incomplete:', generatedStory);
+          return (
+            <div className="max-w-4xl mx-auto p-6 text-center">
+              <h2 className="text-2xl font-bold mb-4">Errore nella generazione della storia</h2>
+              <p className="text-muted-foreground mb-4">
+                Si è verificato un problema durante la generazione della storia.
+              </p>
+              <button 
+                onClick={resetWizard}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              >
+                Ricomincia
+              </button>
+            </div>
+          );
+        }
+        
         return (
           <StoryDisplay
-            story={generatedStory!}
+            story={generatedStory}
             onReset={resetWizard}
           />
         );

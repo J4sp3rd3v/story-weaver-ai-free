@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -113,6 +112,8 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
   };
 
   const parseStoryContent = (content: string) => {
+    console.log('Parsing story content:', content);
+    
     const lines = content.split('\n');
     let title = 'La Tua Storia Epica';
     const scenes = [];
@@ -130,7 +131,7 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
         }
         currentScene = {
           id: `scene-${scenes.length + 1}`,
-          title: line,
+          title: line.replace(/^SCENA \d+:\s*/, '').trim(),
           content: '',
           imagePrompt: ''
         };
@@ -149,21 +150,34 @@ La storia deve essere completa, con un inizio coinvolgente, sviluppo della trama
       scenes.push(currentScene);
     }
 
-    // Calcola le parole totali
+    // Ensure we have at least one scene
+    if (scenes.length === 0) {
+      scenes.push({
+        id: 'scene-1',
+        title: 'La Storia',
+        content: content || 'Una storia è stata generata ma non è stata possibile analizzarla correttamente.',
+        imagePrompt: 'A dramatic scene from a story, cinematic lighting, high quality'
+      });
+    }
+
+    // Calculate word count
     scenes.forEach(scene => {
-      wordCount += scene.content.split(' ').length;
+      wordCount += scene.content.split(' ').filter(word => word.length > 0).length;
     });
 
-    const estimatedReadingTime = Math.ceil(wordCount / 200);
+    const estimatedReadingTime = Math.max(1, Math.ceil(wordCount / 200));
 
-    return {
+    const story = {
       id: Date.now().toString(),
-      title,
+      title: title || 'La Tua Storia Epica',
       content: content,
       scenes,
       estimatedReadingTime,
       wordCount
     };
+
+    console.log('Parsed story:', story);
+    return story;
   };
 
   const handleGenerate = async () => {
