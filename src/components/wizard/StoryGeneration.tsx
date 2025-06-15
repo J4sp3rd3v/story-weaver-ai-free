@@ -15,19 +15,20 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
-// Modelli AI specializzati per ruoli specifici - AGGIORNATI CON MODELLI DISPONIBILI
+// Modelli AI specializzati per ruoli specifici - AGGIORNATI CON MODELLI DISPONIBILI 2024
 const SPECIALIZED_MODELS = {
-  architect: 'meta-llama/llama-3.2-3b-instruct:free', // Struttura e continuità narrativa
-  psychologist: 'meta-llama/llama-3.2-1b-instruct:free', // Sviluppo psicologico personaggi
-  writer: 'mistralai/mistral-7b-instruct:free',        // Scrittura scene coinvolgenti
-  atmosphere: 'huggingfaceh4/zephyr-7b-beta:free',    // Creazione atmosfera immersiva
-  editor: 'openchat/openchat-7b:free'                  // Revisione finale e collegamenti
+  architect: 'meta-llama/llama-3.3-70b-instruct:free', // Struttura e continuità narrativa
+  psychologist: 'deepseek/deepseek-chat-v3-0324:free', // Sviluppo psicologico personaggi
+  writer: 'google/gemini-2.0-flash-exp:free',        // Scrittura scene coinvolgenti
+  atmosphere: 'google/gemma-3-27b-it:free',    // Creazione atmosfera immersiva
+  editor: 'qwen/qwq-32b:free'                  // Revisione finale e collegamenti
 };
 
 const FALLBACK_MODELS = [
-  'google/gemma-7b-it:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'meta-llama/llama-3.2-1b-instruct:free'
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'google/gemini-2.0-flash-exp:free',
+  'google/gemma-3-27b-it:free'
 ];
 
 const StoryGeneration: React.FC<StoryGenerationProps> = ({
@@ -160,58 +161,61 @@ PERSONAGGIO_AMABILE: [Perché il lettore si affeziona al protagonista]
 POSTA_IN_GIOCO_PERSONALE: [Cosa rischia di perdere di importante]
 TIMER_EMOTIVO: [Pressione temporale che crea ansia]
 
-ARCO_EMOTIVO_6_SCENE:
+STRUTTURA_NARRATIVA_6_SCENE:
 
-SCENA_1: "L'Aggancio Irresistibile"
-OBIETTIVO_EMOTIVO: Far innamorare il lettore del protagonista
-SITUAZIONE_RELATABLE: [Situazione con cui il lettore si identifica]
-VULNERABILITÀ_MOSTRATA: [Momento di debolezza che crea empatia]
-MISTERO_INTRIGANTE: [Domanda che ossessiona]
-DETTAGLIO_SENSORIALE: [Odore, suono, texture che immergono]
-CLIFFHANGER_PERSONALE: [Qualcosa che riguarda il cuore del protagonista]
-EMOZIONE_DOMINANTE: [Quale emozione deve provare il lettore]
+SCENA_1: "L'Introduzione Coinvolgente"
+OBIETTIVO_NARRATIVO: Presentare protagonista e situazione iniziale
+SITUAZIONE_INIZIALE: [Situazione normale del protagonista]
+ELEMENTO_SCATENANTE: [Evento che innesca la storia]
+CONFLITTO_INTRODOTTO: [Primo ostacolo o problema]
+INFORMAZIONI_CHIAVE: [Cosa deve sapere il lettore]
+TRANSIZIONE_VERSO_SCENA_2: [Come si collega alla scena successiva]
+EMOZIONE_DOMINANTE: [Emozione principale da trasmettere]
 
-SCENA_2: "L'Approfondimento"
-RIVELAZIONE_CARATTERE: [Aspetto nuovo del protagonista]
-COMPLICAZIONE_EMOTIVA: [Come si complica emotivamente]
-CONTRASTO_ATMOSFERICO: [Cambio di mood/ambientazione]
-ANTAGONISTA_INTRIGANTE: [Prima apparizione affascinante del nemico]
-ALLEANZA_INASPETTATA: [Nuovo legame emotivo]
-SEGRETO_RIVELATO: [Verità che cambia tutto]
-EMOZIONE_DOMINANTE: [Curiosità, apprensione, fascino]
+SCENA_2: "Lo Sviluppo del Conflitto"
+APPROFONDIMENTO_PERSONAGGIO: [Mostra più aspetti del protagonista]
+COMPLICAZIONE_PRINCIPALE: [Il problema si intensifica]
+NUOVI_OSTACOLI: [Sfide aggiuntive che emergono]
+INTRODUZIONE_ANTAGONISTA: [Prima apparizione del conflitto principale]
+CRESCITA_TENSIONE: [Come aumenta lo stake]
+TRANSIZIONE_VERSO_SCENA_3: [Collegamento logico alla scena successiva]
+EMOZIONE_DOMINANTE: [Tensione, preoccupazione, determinazione]
 
-SCENA_3: "Il Tradimento Emotivo"
-ILLUSIONE_INFRANTA: [Quando tutto quello che sembrava vero non lo è]
-MOMENTO_VULNERABILITÀ: [Quando il protagonista è più fragile]
-ANTAGONISTA_SEDUTTIVO: [Perché il nemico è affascinante]
-PERDITA_DOLOROSA: [Cosa perde emotivamente]
-SCELTA_IMPOSSIBILE: [Dilemma che spezza il cuore]
-SIMBOLO_SPEZZATO: [Oggetto/simbolo che si rompe]
-EMOZIONE_DOMINANTE: [Tradimento, dolore, confusione]
+SCENA_3: "Il Primo Climax"
+CONFRONTO_INIZIALE: [Prima battaglia/confronto importante]
+RIVELAZIONE_IMPORTANTE: [Informazione che cambia la prospettiva]
+PERDITA_O_VITTORIA: [Risultato del confronto]
+CONSEGUENZE_AZIONI: [Effetti delle scelte del protagonista]
+CAMBIO_DINAMICHE: [Come si modifica la situazione]
+TRANSIZIONE_VERSO_SCENA_4: [Setup per la scena successiva]
+EMOZIONE_DOMINANTE: [Shock, realizzazione, svolta]
 
-SCENA_4: "La Rivelazione Devastante"
-VERITÀ_SCONVOLGENTE: [Rivelazione che cambia tutto]
-PROTAGONISTA_SPEZZATO: [Momento di massima disperazione]
-ANTAGONISTA_UMANO: [Quando vediamo il lato umano del nemico]
-RICORDO_DOLOROSO: [Flashback che spiega tutto]
-PUNTO_NON_RITORNO: [Momento in cui tutto cambia per sempre]
-EMOZIONE_DOMINANTE: [Shock, devastazione, comprensione]
+SCENA_4: "La Crisi Profonda"
+MOMENTO_PIÙ_BUIO: [Quando tutto sembra perduto]
+DUBBI_PROTAGONISTA: [Crisi interna del personaggio]
+PROVE_DIFFICILI: [Sfide che testano il carattere]
+RIVELAZIONI_DOLOROSE: [Verità difficili da accettare]
+DECISIONE_CRUCIALE: [Scelta che determina il futuro]
+TRANSIZIONE_VERSO_SCENA_5: [Come si prepara la rinascita]
+EMOZIONE_DOMINANTE: [Disperazione, dubbio, riflessione]
 
-SCENA_5: "La Rinascita Eroica"
-DECISIONE_CORAGGIOSA: [Quando il protagonista sceglie di lottare]
-SUPERAMENTO_PAURA: [Come affronta la sua paura più grande]
-SACRIFICIO_NOBILE: [Cosa è disposto a sacrificare]
-ALLEATI_INASPETTATI: [Chi lo aiuta nel momento cruciale]
-SCONTRO_INTERIORE: [Battaglia contro i suoi demoni]
-EMOZIONE_DOMINANTE: [Coraggio, determinazione, speranza]
+SCENA_5: "La Rinascita e l'Azione"
+DECISIONE_FINALE: [Il protagonista sceglie come agire]
+PIANO_O_STRATEGIA: [Come affronta la sfida finale]
+GATHERING_FORZE: [Preparazione per il confronto finale]
+SUPERAMENTO_PAURE: [Come supera i suoi limiti]
+MOVIMENTO_VERSO_CLIMAX: [Preparazione al confronto finale]
+TRANSIZIONE_VERSO_SCENA_6: [Setup per la risoluzione]
+EMOZIONE_DOMINANTE: [Determinazione, coraggio, speranza]
 
-SCENA_6: "La Catarsi Finale"
-CONFRONTO_DEFINITIVO: [Scontro finale non solo fisico ma emotivo]
-PERDONO/VENDETTA: [Come risolve il conflitto interno]
-TRASFORMAZIONE_COMPLETA: [Come è cambiato]
-NUOVO_EQUILIBRIO: [Che persona è diventato]
-SPERANZA_FUTURA: [Cosa succederà dopo]
-EMOZIONE_DOMINANTE: [Catarsi, soddisfazione, commozione]
+SCENA_6: "La Risoluzione"
+CONFRONTO_FINALE: [Risoluzione del conflitto principale]
+RISULTATO_DEFINITIVO: [Come si conclude la storia]
+TRASFORMAZIONE_PROTAGONISTA: [Come è cambiato il personaggio]
+NUOVO_EQUILIBRIO: [La nuova situazione normale]
+MESSAGGIO_FINALE: [Cosa impara il lettore]
+CHIUSURA_SODDISFACENTE: [Senso di completezza]
+EMOZIONE_DOMINANTE: [Soddisfazione, catarsi, pace]
 
 TECNICHE_COINVOLGIMENTO:
 IDENTIFICAZIONE: [Come il lettore si identifica]
@@ -341,19 +345,33 @@ Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
   ) => {
     const model = customModel || SPECIALIZED_MODELS.writer;
     
-    // Crea contesto di continuità dalle scene precedenti
+    // Crea contesto di continuità dettagliato dalle scene precedenti
     const continuityContext = previousScenes.length > 0 
-      ? `SCENE_PRECEDENTI:
+      ? `CONTINUITÀ_NARRATIVA_OBBLIGATORIA:
 ${previousScenes.map((scene, idx) => 
-  `Scena ${idx + 1}: ${scene.title}
-  STATO_EMOTIVO_FINALE: ${scene.emotionalState || 'Da definire'}
-  ULTIMO_MOMENTO: "${scene.content.split('\n').slice(-2).join(' ')}"
+  `Scena ${idx + 1}: "${scene.title}"
+  SITUAZIONE_FINALE: ${scene.emotionalHook || 'Situazione in sviluppo'}
+  STATO_PROTAGONISTA: ${scene.emotionalState || 'Stato emotivo in evoluzione'}
+  ELEMENTI_DA_CONTINUARE: ${scene.symbols || 'Elementi narrativi presenti'}
+  ULTIMO_PARAGRAFO: "${scene.content.split('\n').filter(p => p.trim().length > 50).slice(-1)[0] || 'Continuità da stabilire'}"
   `
-).join('\n\n')}`
-      : 'Prima scena - Stabilisci il tono emotivo';
+).join('\n\n')}
+
+REGOLE_CONTINUITÀ:
+1. La scena ${sceneNumber} DEVE collegarsi logicamente alla situazione finale della scena ${sceneNumber - 1}
+2. Il protagonista DEVE mostrare coerenza emotiva con lo stato precedente
+3. NON introdurre nuovi elementi senza collegamento alle scene precedenti
+4. Rispettare la progressione temporale stabilita
+5. Mantenere lo stesso tono e stile narrativo`
+      : `Prima scena - STABILISCI:
+1. Situazione iniziale chiara del protagonista
+2. Ambientazione specifica e dettagliata
+3. Tono narrativo coerente con genere e stile
+4. Elemento scatenante della storia
+5. Gancio per la scena successiva`;
 
     const immersivePrompt = `
-Sei uno SCRITTORE IMMERSIVO di livello mondiale. Scrivi scene che fanno dimenticare al lettore di star leggendo:
+Sei uno SCRITTORE PROFESSIONISTA. Scrivi scene STRUTTURATE e COERENTI che rispettano la narrativa precedente.
 
 PROFILI_PSICOLOGICI:
 ${characterProfiles}
@@ -369,39 +387,62 @@ ${continuityContext}
 SCENA_DA_SCRIVERE:
 ${sceneStructure}
 
-REGOLE_IMMERSIONE_TOTALE:
-1. SHOW DON'T TELL: Mostra emozioni attraverso azioni, non dirle
-2. DETTAGLI_SENSORIALI: Almeno 3 sensi in ogni paragrafo
-3. DIALOGHI_AUTENTICI: Ogni personaggio ha modo di parlare unico
-4. PENSIERI_INTERIORI: Accesso alla mente del protagonista
-5. RITMO_VARIABILE: Alterna tensione e respiro
-6. SOTTOTESTO: Quello che non viene detto è importante
-7. SIMBOLISMO: Oggetti/azioni che rappresentano emozioni
-8. CLIFFHANGER_EMOTIVO: Finisci con una domanda del cuore
+REGOLE_NARRATIVE_OBBLIGATORIE:
+1. MANTIENI COERENZA con personaggi e situazioni precedenti
+2. STRUTTURA CHIARA: Inizio-Sviluppo-Climax-Transizione
+3. CONTINUITÀ LOGICA: Collega fluidamente alla scena precedente
+4. DIALOGHI REALISTICI: Massimo 3-4 battute per volta
+5. DESCRIZIONI BILANCIATE: Non sovraccaricare, alternare azione-descrizione
+6. RITMO CONTROLLATO: Paragrafi di 3-5 righe massimo
+7. PROGRESSIONE EMOTIVA: Un'emozione principale per scena
+8. TRANSIZIONE FLUIDA: Prepara la scena successiva senza forzature
 
-TECNICHE_SPECIFICHE:
-- USA METAFORE SENSORIALI per le emozioni
-- CREA TENSIONE attraverso piccoli dettagli
-- FAI RESPIRARE IL LETTORE nel ritmo
-- COSTRUISCI EMPATIA con vulnerabilità del protagonista
-- USA IL CORPO per mostrare stati d'animo
-- CREA SUSPENSE emotiva, non solo di trama
+REGOLE_PUNTEGGIATURA_TTS (OBBLIGATORIE):
+1. PUNTI E VIRGOLE: Usa ";" per pause enfatiche che creano suspense
+2. VIRGOLE STRATEGICHE: Usa "," per creare ritmo e respiro naturale
+3. PUNTI FERMI: Usa "." per conclusioni decise e momenti di impatto
+4. DUE PUNTI: Usa ":" per introdurre rivelazioni o momenti drammatici
+5. PUNTI ESCLAMATIVI: Usa "!" solo per momenti di vero shock o emozione intensa
+6. PUNTI INTERROGATIVI: Usa "?" per creare suspense e coinvolgimento
+7. PUNTINI SOSPENSIVI: Usa "..." per pause cariche di tensione (massimo 1 per paragrafo)
+8. TRATTINI: Usa "—" per interruzioni drammatiche nel discorso
 
-LUNGHEZZA: 1200-1400 parole di qualità cinematografica
+ESEMPI_PUNTEGGIATURA_TTS:
+- SUSPENSE: "Lo sguardo si fermò sulla porta; qualcosa non andava."
+- ENFASI: "Era lui: l'uomo che aveva cambiato tutto."
+- RITMO: "Camminava lentamente, cautamente, come un predatore."
+- TENSIONE: "Si voltò... e vide quello che temeva di più."
 
-FORMATO_RISPOSTA:
-TITOLO_EVOCATIVO: [Titolo che cattura l'essenza emotiva]
+STRUTTURA_OBBLIGATORIA:
+- PARAGRAFO 1: Collegamento alla scena precedente (se non è la prima)
+- PARAGRAFI 2-3: Introduzione situazione/conflitto
+- PARAGRAFI 4-5: Sviluppo con dialoghi o azioni
+- PARAGRAFI 6-7: Climax emotivo della scena
+- PARAGRAFO 8: Risoluzione parziale e gancio per la prossima scena
+
+REGOLE_DIALOGHI_TTS:
+1. ATTRIBUZIONI CHIARE: Sempre "disse Marco" non solo "disse"
+2. PAUSE NATURALI: Inserisci virgole per respiro naturale nei dialoghi
+3. EMOZIONI EXPLICIT: "disse con rabbia", "sussurrò nervosamente"
+4. INTERRUZIONI: Usa "—" per dialoghi interrotti o sovrapposti
+5. ENFASI VOCALE: Usa corsivo per parole da enfatizzare
+6. SILENZIO: Descrivi pause significative "Rimase in silenzio per un momento"
+
+LUNGHEZZA: 800-1000 parole, scritte con prosa fluida e leggibile per TTS
+
+FORMATO_RISPOSTA OBBLIGATORIO:
+TITOLO_EVOCATIVO: [Titolo chiaro della scena]
 
 CONTENUTO_IMMERSIVO:
-[Scena scritta con tecnica immersiva totale]
+[Scena scritta seguendo la struttura obbligatoria sopra]
 
-STATO_EMOTIVO_FINALE: [Come si sente il protagonista alla fine]
+STATO_EMOTIVO_FINALE: [Emozione principale del protagonista alla fine]
 
-GANCIO_EMOTIVO: [Cosa spinge a leggere la scena successiva]
+GANCIO_EMOTIVO: [Una frase che collega alla scena successiva]
 
-SIMBOLI_PRESENTI: [Elementi simbolici usati]
+SIMBOLI_PRESENTI: [Massimo 2 elementi simbolici, specifici]
 
-Scrivi una scena che il lettore non riuscirà a dimenticare.
+RISPETTA RIGOROSAMENTE questa struttura. Non aggiungere elementi non richiesti.
 `;
 
     const response = await callLLM(apiKey, model, immersivePrompt, 'scrittore immersivo');
@@ -450,6 +491,7 @@ OBIETTIVI_PERFEZIONAMENTO:
 5. POTENZIA SOTTOTESTO e non-detto
 6. AFFINA TRANSIZIONI tra emozioni
 7. AMPLIFICA SIMBOLISMO
+8. OTTIMIZZA PUNTEGGIATURA per sintetizzatori vocali (TTS)
 
 TECNICHE_RAFFINAMENTO:
 - Sostituisci aggettivi generici con dettagli specifici
@@ -458,6 +500,14 @@ TECNICHE_RAFFINAMENTO:
 - Intensifica conflitto interno del protagonista
 - Rendi ogni dialogo multi-livello (superficie + sottotesto)
 - Usa pause e silenzi per creare tensione
+
+PERFEZIONAMENTO_PUNTEGGIATURA_TTS:
+- Sostituisci frasi lunghe con punti e virgole strategici
+- Aggiungi virgole per creare ritmo respiratorio naturale
+- Usa due punti prima di rivelazioni importanti
+- Inserisci trattini per interruzioni drammatiche
+- Bilancia puntini sospensivi per massima tensione
+- Ottimizza ogni frase per la lettura vocale fluida
 
 MANTIENI:
 - Stessa trama e sviluppi
@@ -594,48 +644,68 @@ Solo il prompt, senza spiegazioni:
     let emotionalHook = '';
     let symbols = '';
 
-    // Estrai titolo
-    const titleMatch = content.match(/TITOLO[_\s]*(?:EVOCATIVO|RAFFINATO)?:\s*(.+)/i);
+    // Estrai titolo con pattern più flessibile
+    const titleMatch = content.match(/TITOLO[_\s]*(?:EVOCATIVO|RAFFINATO|CHIARO)?:\s*(.+)/i);
     if (titleMatch) {
-      title = titleMatch[1].trim();
+      title = titleMatch[1].trim().replace(/["']/g, '');
     }
 
-    // Estrai contenuto
-    const contentMatch = content.match(/CONTENUTO[_\s]*(?:IMMERSIVO|INTENSIFICATO)?:\s*([\s\S]*?)(?=STATO_EMOTIVO|IMPATTO_EMOTIVO|GANCIO_EMOTIVO|$)/i);
+    // Estrai contenuto con pattern più robusto
+    const contentMatch = content.match(/CONTENUTO[_\s]*(?:IMMERSIVO|INTENSIFICATO)?:\s*([\s\S]*?)(?=STATO_EMOTIVO|IMPATTO_EMOTIVO|GANCIO_EMOTIVO|SIMBOLI_PRESENTI|$)/i);
     if (contentMatch) {
       sceneContent = contentMatch[1].trim();
+    }
+
+    // Se non trova il contenuto strutturato, prende tutto dopo il titolo
+    if (!sceneContent && content.includes('TITOLO')) {
+      const afterTitle = content.split(/TITOLO[_\s]*(?:EVOCATIVO|RAFFINATO|CHIARO)?:\s*.+/i)[1];
+      if (afterTitle) {
+        const beforeMeta = afterTitle.split(/(?:STATO_EMOTIVO|GANCIO_EMOTIVO|SIMBOLI_PRESENTI)/i)[0];
+        sceneContent = beforeMeta.trim();
+      }
     }
 
     // Estrai stato emotivo
     const stateMatch = content.match(/(?:STATO_EMOTIVO_FINALE|IMPATTO_EMOTIVO_FINALE):\s*(.+)/i);
     if (stateMatch) {
-      emotionalState = stateMatch[1].trim();
+      emotionalState = stateMatch[1].trim().replace(/["']/g, '');
     }
 
     // Estrai gancio emotivo
     const hookMatch = content.match(/GANCIO_EMOTIVO:\s*(.+)/i);
     if (hookMatch) {
-      emotionalHook = hookMatch[1].trim();
+      emotionalHook = hookMatch[1].trim().replace(/["']/g, '');
     }
 
     // Estrai simboli
     const symbolsMatch = content.match(/(?:SIMBOLI_PRESENTI|ELEMENTI_SIMBOLICI):\s*(.+)/i);
     if (symbolsMatch) {
-      symbols = symbolsMatch[1].trim();
+      symbols = symbolsMatch[1].trim().replace(/["']/g, '');
     }
 
-    // Fallback se il parsing fallisce
-    if (!sceneContent || sceneContent.length < 300) {
-      sceneContent = fallbackScene?.content || content;
+    // Fallback più robusto
+    if (!sceneContent || sceneContent.length < 200) {
+      // Prova a estrarre il contenuto principale
+      const cleanContent = content
+        .replace(/TITOLO[_\s]*(?:EVOCATIVO|RAFFINATO|CHIARO)?:\s*.+/i, '')
+        .replace(/(?:STATO_EMOTIVO|GANCIO_EMOTIVO|SIMBOLI_PRESENTI)[\s\S]*/i, '')
+        .trim();
+      
+      sceneContent = cleanContent.length > 200 ? cleanContent : (fallbackScene?.content || content);
     }
+
+    // Pulizia finale del contenuto
+    sceneContent = sceneContent
+      .replace(/CONTENUTO[_\s]*(?:IMMERSIVO|INTENSIFICATO)?:\s*/i, '')
+      .trim();
 
     return {
       id: `scene-${sceneNumber}`,
       title: title,
       content: sceneContent,
-      emotionalState: emotionalState,
-      emotionalHook: emotionalHook,
-      symbols: symbols,
+      emotionalState: emotionalState || `Emozione scena ${sceneNumber}`,
+      emotionalHook: emotionalHook || `Collegamento verso scena ${sceneNumber + 1}`,
+      symbols: symbols || 'Elementi narrativi',
       imagePrompt: '' // Sarà popolato dopo
     };
   };

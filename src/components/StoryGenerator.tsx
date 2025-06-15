@@ -24,7 +24,7 @@ const STORY_GENRES = [
 const FREE_MODELS = [
   'meta-llama/llama-3.2-3b-instruct:free',
   'microsoft/phi-3-mini-128k-instruct:free',
-  'huggingfaceh4/zephyr-7b-beta:free',
+  'deepseek/deepseek-chat-v3-0324:free',
   'openchat/openchat-7b:free'
 ];
 
