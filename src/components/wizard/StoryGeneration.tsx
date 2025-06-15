@@ -1414,9 +1414,9 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
   };
 
   const createImmersiveStory = (blueprint: string, scenes: any[], characterProfiles: string) => {
-    // Estrai il titolo dal blueprint
-    const titleMatch = blueprint.match(/TITOLO_MAGNETICO:\s*(.+)/);
-    const title = titleMatch ? titleMatch[1].trim() : 'Storia Immersiva con Personaggi Profondi';
+    // Estrai il titolo dal blueprint (nuovo formato)
+    const titleMatch = blueprint.match(/TITOLO_STORIA:\s*(.+)/) || blueprint.match(/TITOLO_MAGNETICO:\s*(.+)/);
+    const title = titleMatch ? titleMatch[1].trim().replace(/["'\[\]]/g, '') : 'Storia Coinvolgente';
 
     // Calcola statistiche
     let totalWordCount = 0;
@@ -1427,18 +1427,31 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
 
     const estimatedReadingTime = Math.max(1, Math.ceil(totalWordCount / 200));
 
+    // Validazione scene
+    const validScenes = scenes.filter(scene => 
+      scene && 
+      scene.title && 
+      scene.content && 
+      scene.content.length > 100
+    );
+
+    if (validScenes.length === 0) {
+      console.error('❌ Nessuna scena valida generata');
+      throw new Error('Nessuna scena valida generata');
+    }
+
     const story = {
       id: Date.now().toString(),
-      title: title,
-      content: scenes.map(scene => scene.content).join('\n\n'),
-      scenes: scenes,
+      title: title || 'Storia Generata',
+      content: validScenes.map(scene => scene.content).join('\n\n'),
+      scenes: validScenes,
       estimatedReadingTime,
       wordCount: totalWordCount,
-      immersionLevel: 'Massima', // Indica qualità della continuità
-      characterDepth: 'Profonda',
-      emotionalImpact: 'Alto',
-      blueprint: blueprint, // Conserva la mappa narrativa
-      characterProfiles: characterProfiles
+      immersionLevel: 'Alta', // Indica qualità della continuità
+      characterDepth: 'Sviluppata',
+      emotionalImpact: 'Coinvolgente',
+      blueprint: blueprint || '', // Conserva la mappa narrativa
+      characterProfiles: characterProfiles || ''
     };
 
     console.log('Storia immersiva completata:', {
@@ -1470,8 +1483,8 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
       const story = await generateImmersiveStory(apiKey);
       
       toast({
-        title: "Storia Immersiva Completata!",
-        description: `${story.scenes.length} scene con personaggi profondi e atmosfere coinvolgenti, ${story.wordCount} parole di qualità emotiva!`,
+        title: "Storia Completata!",
+        description: `${story.scenes.length} scene coerenti e coinvolgenti, ${story.wordCount} parole di alta qualità!`,
       });
 
       onStoryGenerated(story);
@@ -1507,13 +1520,13 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-orange-600/20 rounded-full border border-purple-500/30">
           <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="text-sm font-medium">Sistema Immersivo - 5 LLM Specializzati</span>
+          <span className="text-sm font-medium">Sistema Semplificato - LLM Principale</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-gradient animate-float">
           Storie che Catturano il Cuore
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          5 AI specializzati creano personaggi profondi e atmosfere immersive che rendono impossibile smettere di leggere!
+          Un potente LLM crea storie coerenti e coinvolgenti con personaggi profondi e atmosfere immersive!
         </p>
       </div>
 
@@ -1593,41 +1606,27 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
           </div>
           
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-3">🎭 Sistema Immersivo con 5 LLM Specializzati:</h4>
+            <h4 className="font-semibold mb-3">🎯 Sistema Semplificato e Ottimizzato:</h4>
             <div className="grid grid-cols-1 gap-3 text-sm">
               <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
                 <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
                 <div>
-                  <div className="font-medium text-purple-300">LLM Psicologo</div>
-                  <div className="text-muted-foreground">Crea profili psicologici profondi e autentici</div>
+                  <div className="font-medium text-purple-300">Blueprint Completo</div>
+                  <div className="text-muted-foreground">Crea struttura, personaggi e trama in una volta</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
                 <div>
-                  <div className="font-medium text-blue-300">LLM Architetto Emotivo</div>
-                  <div className="text-muted-foreground">Costruisce archi emotivi irresistibili</div>
+                  <div className="font-medium text-blue-300">Generazione Scene</div>
+                  <div className="text-muted-foreground">Scrive le 6 scene con stile coerente</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
                 <div>
-                  <div className="font-medium text-green-300">LLM Atmosfera</div>
-                  <div className="text-muted-foreground">Crea ambientazioni sensoriali immersive</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">4</div>
-                <div>
-                  <div className="font-medium text-orange-300">LLM Scrittore Immersivo</div>
-                  <div className="text-muted-foreground">Scrive scene che catturano il lettore</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">5</div>
-                <div>
-                  <div className="font-medium text-red-300">LLM Editor Emotivo</div>
-                  <div className="text-muted-foreground">Massimizza l'impatto emotivo finale</div>
+                  <div className="font-medium text-green-300">Prompt Immagini</div>
+                  <div className="text-muted-foreground">Genera prompt specifici per ogni scena</div>
                 </div>
               </div>
             </div>
