@@ -99,6 +99,13 @@ ANTAGONISTA: ${wizardData.antagonist?.name} - ${wizardData.antagonist?.descripti
 GENERE: ${wizardData.genre?.name} - Questo influenza la psicologia
 AMBIENTAZIONE: ${wizardData.setting?.name} - Come plasma i personaggi
 
+REGOLE_NOMI_E_LINGUA:
+1. USA SOLO ITALIANO PURO - niente parole straniere o caratteri non latini
+2. NOMI CARATTERISTICI - evita nomi troppo comuni come "Luca", "Marco", "Anna"
+3. NOMI COERENTI con ambientazione e epoca della storia
+4. COGNOMI SPECIFICI che riflettano background del personaggio
+5. SOPRANNOMI SIGNIFICATIVI se appropriati al carattere
+
 CREA PROFILI PSICOLOGICI DETTAGLIATI:
 
 PROTAGONISTA_PSICOLOGIA:
@@ -397,6 +404,13 @@ REGOLE_NARRATIVE_OBBLIGATORIE:
 7. PROGRESSIONE EMOTIVA: Un'emozione principale per scena
 8. TRANSIZIONE FLUIDA: Prepara la scena successiva senza forzature
 
+REGOLE_LINGUA_E_NOMI_RIGIDE:
+1. SOLO ITALIANO CORRETTO - nessuna parola straniera, nessun carattere non latino
+2. NOMI SIGNIFICATIVI - evita "Luca", "Marco", "Anna", "Giuseppe", "Maria"
+3. NOMI CREATIVI ma credibili per l'ambientazione (es: Adriano, Celeste, Damiano, Isadora)
+4. COERENZA LINGUISTICA - ogni parola deve essere italiana o italianizzata
+5. CORREZIONE AUTOMATICA - se scrivi caratteri strani, riscrivi in italiano puro
+
 REGOLE_PUNTEGGIATURA_TTS (OBBLIGATORIE):
 1. PUNTI E VIRGOLE: Usa ";" per pause enfatiche che creano suspense
 2. VIRGOLE STRATEGICHE: Usa "," per creare ritmo e respiro naturale
@@ -562,25 +576,27 @@ Rendi questa scena indimenticabile.
 
   const generateAtmosphericImagePrompt = async (apiKey: string, scene: any, atmosphericElements: string) => {
     const imagePrompt = `
-Crea un prompt PERFETTO per Stable Diffusion che catturi l'atmosfera emotiva:
+Analizza questa SCENA SPECIFICA e crea un prompt visivo ACCURATO:
 
-SCENA: ${scene.title}
-CONTENUTO: ${scene.content.substring(0, 600)}...
-STATO_EMOTIVO: ${scene.emotionalState || ''}
+TITOLO_SCENA: ${scene.title}
+CONTENUTO_CHIAVE: ${scene.content.substring(0, 800)}...
+EMOZIONE_DOMINANTE: ${scene.emotionalState || ''}
+SIMBOLI_PRESENTI: ${scene.symbols || ''}
 
-ELEMENTI_ATMOSFERICI:
-${atmosphericElements.substring(0, 400)}...
-
-GENERE: ${wizardData.genre?.name}
 AMBIENTAZIONE: ${wizardData.setting?.name}
+GENERE: ${wizardData.genre?.name}
 
-Crea prompt in inglese di MAX 150 caratteri che includa:
-1. Protagonista in azione emotiva specifica
-2. Atmosfera sensoriale dettagliata
-3. Illuminazione che riflette l'emozione
-4. Stile cinematografico del genere
+CREA PROMPT VISIVO CHE RISPECCHI ESATTAMENTE IL CONTENUTO:
 
-Solo il prompt, senza spiegazioni:
+REGOLE_PROMPT_VISIVO:
+1. DESCRIVI SOLO CIÒ CHE ACCADE REALMENTE nella scena
+2. USA DETTAGLI SPECIFICI dal contenuto (luoghi, oggetti, azioni)
+3. RIFLETTI L'EMOZIONE DOMINANTE attraverso lighting e composizione
+4. NON inventare elementi non presenti nel testo
+5. MANTIENI COERENZA con il genere e l'ambientazione
+6. LUNGHEZZA: 100-120 caratteri in inglese
+
+Scrivi SOLO il prompt visivo finale senza spiegazioni:
 `;
 
     try {
@@ -647,7 +663,13 @@ Solo il prompt, senza spiegazioni:
     // Estrai titolo con pattern più flessibile
     const titleMatch = content.match(/TITOLO[_\s]*(?:EVOCATIVO|RAFFINATO|CHIARO)?:\s*(.+)/i);
     if (titleMatch) {
-      title = titleMatch[1].trim().replace(/["']/g, '');
+      title = titleMatch[1].trim()
+        .replace(/["']/g, '')
+        // Pulisci caratteri non latini dal titolo
+        .replace(/[\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf]/g, '')
+        // Sostituisci nomi comuni nei titoli
+        .replace(/\bLuca\b/g, 'Adriano')
+        .replace(/\bMarco\b/g, 'Damiano');
     }
 
     // Estrai contenuto con pattern più robusto
@@ -694,10 +716,21 @@ Solo il prompt, senza spiegazioni:
       sceneContent = cleanContent.length > 200 ? cleanContent : (fallbackScene?.content || content);
     }
 
-    // Pulizia finale del contenuto
+    // Pulizia finale del contenuto e correzione errori
     sceneContent = sceneContent
       .replace(/CONTENUTO[_\s]*(?:IMMERSIVO|INTENSIFICATO)?:\s*/i, '')
-      .trim();
+      .trim()
+      // Rimuovi caratteri non latini
+      .replace(/[\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf]/g, '')
+      // Pulisci asterischi strani
+      .replace(/\*[^*]+\*/g, (match) => match.replace(/[^\x00-\x7F]/g, ''))
+      // Sostituisci nomi troppo comuni se presenti
+      .replace(/\bLuca\b/g, 'Adriano')
+      .replace(/\bMarco\b/g, 'Damiano') 
+      .replace(/\bAnna\b/g, 'Celeste')
+      .replace(/\bMaria\b/g, 'Isadora')
+      .replace(/\bdottor\s+Rossi\b/gi, 'dottor Meridiani')
+      .replace(/\bdottor\s+Bianchi\b/gi, 'dottor Selvaggio');
 
     return {
       id: `scene-${sceneNumber}`,
