@@ -31,6 +31,30 @@ const FALLBACK_MODELS = [
   'google/gemma-3-27b-it:free'
 ];
 
+// Sistema di rate limiting per evitare 429
+const MODEL_USAGE_TRACKER = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const MAX_REQUESTS_PER_MINUTE = 10;
+
+// Funzione per scegliere il modello meno utilizzato
+const getLeastUsedModel = (models: string[]) => {
+  const now = Date.now();
+  let leastUsedModel = models[0];
+  let minUsage = Infinity;
+  
+  for (const model of models) {
+    const usage = MODEL_USAGE_TRACKER.get(model) || [];
+    const recentUsage = usage.filter((timestamp: number) => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    if (recentUsage.length < minUsage) {
+      minUsage = recentUsage.length;
+      leastUsedModel = model;
+    }
+  }
+  
+  return leastUsedModel;
+};
+
 const StoryGeneration: React.FC<StoryGenerationProps> = ({
   wizardData,
   onApiKeySet,
@@ -320,7 +344,8 @@ Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
         );
         
         scenes.push(sceneContent);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Pausa più lunga per evitare rate limiting
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
       } catch (error) {
         console.error(`Errore nella scena ${i + 1}:`, error);
@@ -724,41 +749,106 @@ Scrivi SOLO il prompt finale dettagliato:
     }
   };
 
-  const callLLM = async (apiKey: string, model: string, prompt: string, role: string) => {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'StoryMaster AI'
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: 'system',
-            content: `Sei un ${role} di livello mondiale. Crei storie che catturano il lettore emotivamente e lo tengono incollato. Scrivi sempre in italiano con prosa fluida e coinvolgente. Ogni parola deve servire a immergere il lettore.`
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: role.includes('psicologo') || role.includes('architetto') ? 0.4 : 0.7,
-        max_tokens: role.includes('atmosfera') ? 1500 : 2200,
-        top_p: 0.9,
-        frequency_penalty: 0.3,
-        presence_penalty: 0.6
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status} - Model: ${model}`);
+  const callLLM = async (apiKey: string, model: string, prompt: string, role: string, retryCount = 0) => {
+    const maxRetries = 3;
+    const fallbackModels = FALLBACK_MODELS.filter(m => m !== model);
+    
+    // Controllo rate limiting
+    const now = Date.now();
+    const modelUsage = MODEL_USAGE_TRACKER.get(model) || [];
+    const recentRequests = modelUsage.filter((timestamp: number) => now - timestamp < RATE_LIMIT_WINDOW);
+    
+    if (recentRequests.length >= MAX_REQUESTS_PER_MINUTE) {
+      console.warn(`⚠️ Rate limit preventivo per ${model}, uso fallback`);
+      if (fallbackModels.length > 0) {
+        const fallbackModel = getLeastUsedModel(fallbackModels);
+        console.log(`🔄 Scelto modello meno utilizzato: ${fallbackModel}`);
+        return await callLLM(apiKey, fallbackModel, prompt, role, retryCount);
+      }
     }
+    
+    // Aggiorna tracker
+    recentRequests.push(now);
+    MODEL_USAGE_TRACKER.set(model, recentRequests);
+    
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'StoryMaster AI'
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: `Sei un ${role} di livello mondiale. Crei storie che catturano il lettore emotivamente e lo tengono incollato. Scrivi sempre in italiano con prosa fluida e coinvolgente. Ogni parola deve servire a immergere il lettore.`
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: role.includes('psicologo') || role.includes('architetto') ? 0.4 : 0.7,
+          max_tokens: role.includes('atmosfera') ? 1500 : 2200,
+          top_p: 0.9,
+          frequency_penalty: 0.3,
+          presence_penalty: 0.6
+        }),
+      });
 
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
+      if (!response.ok) {
+        // Gestione specifica per errore 429 (Rate Limit)
+        if (response.status === 429) {
+          console.warn(`⚠️ Rate limit raggiunto per ${model}, tentativo ${retryCount + 1}/${maxRetries}`);
+          
+          // Se abbiamo ancora tentativi, prova con un modello diverso
+          if (retryCount < maxRetries && fallbackModels.length > 0) {
+            const fallbackModel = getLeastUsedModel(fallbackModels);
+            console.log(`🔄 Fallback al modello meno utilizzato: ${fallbackModel}`);
+            
+            // Aggiorna il progresso per informare l'utente
+            setGenerationProgress(`⚠️ Modello sovraccarico, passando a ${fallbackModel.split('/')[1]}...`);
+            
+            // Attesa progressiva: 3s, 6s, 9s
+            const waitTime = (retryCount + 1) * 3000;
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            
+            return await callLLM(apiKey, fallbackModel, prompt, role, retryCount + 1);
+          }
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status} - Model: ${model}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content || '';
+      
+      if (retryCount > 0) {
+        console.log(`✅ Successo con fallback dopo ${retryCount} tentativi`);
+      }
+      
+      return content;
+      
+    } catch (error) {
+      console.error(`❌ Errore con modello ${model}:`, error);
+      
+      // Se è un errore di rete o altro, prova comunque il fallback
+      if (retryCount < maxRetries && fallbackModels.length > 0) {
+        const fallbackModel = fallbackModels[retryCount % fallbackModels.length];
+        console.log(`🔄 Tentativo fallback per errore: ${fallbackModel}`);
+        
+        const waitTime = (retryCount + 1) * 2000;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        
+        return await callLLM(apiKey, fallbackModel, prompt, role, retryCount + 1);
+      }
+      
+      throw error;
+    }
   };
 
   // Funzioni helper per nomi appropriati all'autore
