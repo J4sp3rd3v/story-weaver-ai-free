@@ -101,10 +101,17 @@ AMBIENTAZIONE: ${wizardData.setting?.name} - Come plasma i personaggi
 
 REGOLE_NOMI_E_LINGUA:
 1. USA SOLO ITALIANO PURO - niente parole straniere o caratteri non latini
-2. NOMI CARATTERISTICI - evita nomi troppo comuni come "Luca", "Marco", "Anna"
-3. NOMI COERENTI con ambientazione e epoca della storia
-4. COGNOMI SPECIFICI che riflettano background del personaggio
-5. SOPRANNOMI SIGNIFICATIVI se appropriati al carattere
+2. NOMI CARATTERISTICI DELL'AUTORE - adatta i nomi allo stile di ${wizardData.author?.name}
+3. ESEMPI_NOMI_PER_AUTORE:
+   - Stephen King: Jack, Danny, Carrie, Paul, Annie, Ben, Beverly, Wendy
+   - Agatha Christie: Hercule, Miss Marple, Hastings, Poirot, nomi inglesi classici
+   - George R.R. Martin: Tyrion, Arya, Jon, Cersei, Daenerys, nomi fantasy
+   - Edgar Allan Poe: Edgar, Roderick, Ligeia, Morella, nomi gotici
+   - Arthur Conan Doyle: Sherlock, Watson, Mycroft, Lestrade, nomi vittoriani
+   - Dan Brown: Robert, Sophie, Langdon, nomi americani moderni
+4. NOMI COERENTI con ambientazione, epoca e nazionalità della storia
+5. COGNOMI SPECIFICI che riflettano background culturale
+6. EVITA nomi generici come "Luca", "Marco", "Anna", "Giuseppe" a meno che non siano tipici dell'autore
 
 CREA PROFILI PSICOLOGICI DETTAGLIATI:
 
@@ -406,9 +413,14 @@ REGOLE_NARRATIVE_OBBLIGATORIE:
 
 REGOLE_LINGUA_E_NOMI_RIGIDE:
 1. SOLO ITALIANO CORRETTO - nessuna parola straniera, nessun carattere non latino
-2. NOMI SIGNIFICATIVI - evita "Luca", "Marco", "Anna", "Giuseppe", "Maria"
-3. NOMI CREATIVI ma credibili per l'ambientazione (es: Adriano, Celeste, Damiano, Isadora)
-4. COERENZA LINGUISTICA - ogni parola deve essere italiana o italianizzata
+2. NOMI TIPICI DELL'AUTORE ${wizardData.author?.name || 'scelto'}:
+   - Stephen King: Jack, Danny, Carrie, Paul, Annie, Ben, Beverly, Wendy
+   - Agatha Christie: Hercule, Miss Marple, Hastings, Poirot, nomi inglesi
+   - George R.R. Martin: Tyrion, Arya, Jon, Cersei, Daenerys, nomi fantasy
+   - Edgar Allan Poe: Edgar, Roderick, Ligeia, Morella, nomi gotici
+   - Altri autori: nomi coerenti con il loro stile letterario
+3. EVITA nomi generici come "Luca", "Marco", "Anna" TRANNE se tipici dell'autore
+4. COERENZA CULTURALE - nomi che riflettano l'ambientazione geografica
 5. CORREZIONE AUTOMATICA - se scrivi caratteri strani, riscrivi in italiano puro
 
 REGOLE_PUNTEGGIATURA_TTS (OBBLIGATORIE):
@@ -652,6 +664,52 @@ Scrivi SOLO il prompt visivo finale senza spiegazioni:
     return data.choices[0]?.message?.content || '';
   };
 
+  // Funzioni helper per nomi appropriati all'autore
+  const getAuthorAppropiateName = (gender: 'male' | 'female'): string => {
+    const authorName = wizardData.author?.name?.toLowerCase() || '';
+    
+    if (authorName.includes('stephen king')) {
+      return gender === 'male' ? ['Jack', 'Danny', 'Paul', 'Ben'][Math.floor(Math.random() * 4)] 
+                                : ['Carrie', 'Annie', 'Beverly', 'Wendy'][Math.floor(Math.random() * 4)];
+    }
+    if (authorName.includes('agatha christie')) {
+      return gender === 'male' ? ['Hercule', 'Hastings', 'Inspector'][Math.floor(Math.random() * 3)]
+                                : ['Miss Marple', 'Ariadne', 'Jane'][Math.floor(Math.random() * 3)];
+    }
+    if (authorName.includes('george martin') || authorName.includes('r.r. martin')) {
+      return gender === 'male' ? ['Tyrion', 'Jon', 'Jaime', 'Robb'][Math.floor(Math.random() * 4)]
+                                : ['Arya', 'Cersei', 'Daenerys', 'Sansa'][Math.floor(Math.random() * 4)];
+    }
+    if (authorName.includes('edgar allan poe')) {
+      return gender === 'male' ? ['Edgar', 'Roderick', 'William'][Math.floor(Math.random() * 3)]
+                                : ['Ligeia', 'Morella', 'Berenice'][Math.floor(Math.random() * 3)];
+    }
+    if (authorName.includes('arthur conan doyle')) {
+      return gender === 'male' ? ['Sherlock', 'Watson', 'Mycroft', 'Lestrade'][Math.floor(Math.random() * 4)]
+                                : ['Irene', 'Mary', 'Mrs. Hudson'][Math.floor(Math.random() * 3)];
+    }
+    
+    // Default per autori italiani o altri
+    return gender === 'male' ? ['Adriano', 'Damiano', 'Emilio', 'Silvano'][Math.floor(Math.random() * 4)]
+                              : ['Celeste', 'Isadora', 'Valentina', 'Serafina'][Math.floor(Math.random() * 4)];
+  };
+
+  const getAuthorAppropriateSurname = (): string => {
+    const authorName = wizardData.author?.name?.toLowerCase() || '';
+    
+    if (authorName.includes('stephen king')) {
+      return ['Torrance', 'Chambers', 'Creed', 'White'][Math.floor(Math.random() * 4)];
+    }
+    if (authorName.includes('agatha christie')) {
+      return ['Poirot', 'Marple', 'Christie', 'Hastings'][Math.floor(Math.random() * 4)];
+    }
+    if (authorName.includes('arthur conan doyle')) {
+      return ['Holmes', 'Watson', 'Moriarty', 'Lestrade'][Math.floor(Math.random() * 4)];
+    }
+    
+    return ['Meridiani', 'Selvaggio', 'Monteverdi', 'Bellavista'][Math.floor(Math.random() * 4)];
+  };
+
   const parseEmotionalScene = (content: string, sceneNumber: number, fallbackScene?: any) => {
     const lines = content.split('\n').filter(line => line.trim());
     let title = fallbackScene?.title || `Scena ${sceneNumber}`;
@@ -724,13 +782,14 @@ Scrivi SOLO il prompt visivo finale senza spiegazioni:
       .replace(/[\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf]/g, '')
       // Pulisci asterischi strani
       .replace(/\*[^*]+\*/g, (match) => match.replace(/[^\x00-\x7F]/g, ''))
-      // Sostituisci nomi troppo comuni se presenti
-      .replace(/\bLuca\b/g, 'Adriano')
-      .replace(/\bMarco\b/g, 'Damiano') 
-      .replace(/\bAnna\b/g, 'Celeste')
-      .replace(/\bMaria\b/g, 'Isadora')
-      .replace(/\bdottor\s+Rossi\b/gi, 'dottor Meridiani')
-      .replace(/\bdottor\s+Bianchi\b/gi, 'dottor Selvaggio');
+      // Sostituisci nomi troppo comuni con nomi appropriati all'autore
+      .replace(/\bLuca\b/g, getAuthorAppropiateName('male'))
+      .replace(/\bMarco\b/g, getAuthorAppropiateName('male'))
+      .replace(/\bAnna\b/g, getAuthorAppropiateName('female'))
+      .replace(/\bMaria\b/g, getAuthorAppropiateName('female'))
+      .replace(/\bGiuseppe\b/g, getAuthorAppropiateName('male'))
+             .replace(/\bdottor\s+Rossi\b/gi, `dottor ${getAuthorAppropriateSurname()}`)
+       .replace(/\bdottor\s+Bianchi\b/gi, `dottor ${getAuthorAppropriateSurname()}`);
 
     return {
       id: `scene-${sceneNumber}`,
