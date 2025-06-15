@@ -586,34 +586,131 @@ Rendi questa scena indimenticabile.
     return scenesWithImages;
   };
 
+  // Funzione helper per creare prompt specifici dal contenuto
+  const createSpecificImagePrompt = (scene: any, wizardData: any) => {
+    const content = scene.content.toLowerCase();
+    let prompt = "";
+    let character = "person";
+    let action = "";
+    let environment = "";
+    let objects = "";
+    let emotion = "";
+    
+    // Identifica il personaggio principale se menzionato
+    const nameMatch = content.match(/(jack|danny|carrie|paul|ben|marco|luca|anna|giuseppe|maria)\s/i);
+    if (nameMatch) {
+      character = nameMatch[1].toLowerCase() === 'jack' || nameMatch[1].toLowerCase() === 'danny' ? "man" : 
+                  nameMatch[1].toLowerCase() === 'carrie' || nameMatch[1].toLowerCase() === 'anna' ? "woman" : "person";
+    }
+    
+    // Identifica azioni specifiche
+    if (content.includes('porta') && (content.includes('chiud') || content.includes('control'))) {
+      action = "checking door lock repeatedly";
+    } else if (content.includes('telefon') && content.includes('squilla')) {
+      action = "answering ringing phone with hesitation";
+    } else if (content.includes('specchio') && content.includes('guard')) {
+      action = "staring at reflection in mirror";
+    } else if (content.includes('finestra') && content.includes('guard')) {
+      action = "looking out window into darkness";
+    } else if (content.includes('letto') && content.includes('svegl')) {
+      action = "sitting up in bed after waking";
+    } else if (content.includes('cammin') && content.includes('corridor')) {
+      action = "walking through dark hallway";
+    } else if (content.includes('scritt') || content.includes('computer')) {
+      action = "typing at computer screen";
+    } else {
+      action = "standing with tense posture";
+    }
+    
+    // Ambiente specifico
+    if (content.includes('appartament') || content.includes('casa')) {
+      environment = "inside dimly lit apartment";
+    } else if (content.includes('cucina')) {
+      environment = "in modern kitchen";
+    } else if (content.includes('bagno')) {
+      environment = "in small bathroom";
+    } else if (content.includes('studio') || content.includes('ufficio')) {
+      environment = "in home office";
+    } else if (content.includes('salon') || content.includes('soggiorn')) {
+      environment = "in living room";
+    } else if (content.includes('camera') || content.includes('letto')) {
+      environment = "in dark bedroom";
+    } else {
+      environment = "in shadowy interior space";
+    }
+    
+    // Oggetti specifici
+    if (content.includes('telefon')) objects += "telephone on table, ";
+    if (content.includes('computer') || content.includes('schermo')) objects += "glowing computer screen, ";
+    if (content.includes('specchio')) objects += "large mirror on wall, ";
+    if (content.includes('finestra')) objects += "window with venetian blinds, ";
+    if (content.includes('porta')) objects += "wooden door with multiple locks, ";
+    if (content.includes('lamp')) objects += "single desk lamp, ";
+    
+    // Espressione emotiva
+    if (scene.emotionalState?.includes('ansios') || content.includes('ansia')) {
+      emotion = "anxious expression, sweaty forehead, clenched fists";
+    } else if (scene.emotionalState?.includes('paur') || content.includes('paura')) {
+      emotion = "fearful eyes, pale complexion, tense shoulders";
+    } else if (scene.emotionalState?.includes('confus') || content.includes('confus')) {
+      emotion = "confused look, furrowed brow, uncertain gesture";
+    } else {
+      emotion = "worried expression, tired eyes";
+    }
+    
+    // Costruisci il prompt finale
+    prompt = `${character} ${action}, ${environment}, ${objects}${emotion}, dramatic lighting with harsh shadows, psychological thriller atmosphere, cinematic realism, high detail`;
+    
+    return prompt;
+  };
+
   const generateAtmosphericImagePrompt = async (apiKey: string, scene: any, atmosphericElements: string) => {
     const imagePrompt = `
-Analizza questa SCENA SPECIFICA e crea un prompt visivo ACCURATO:
+Analizza DETTAGLIATAMENTE questa scena e crea un prompt visivo SPECIFICO per Stable Diffusion:
 
 TITOLO_SCENA: ${scene.title}
-CONTENUTO_CHIAVE: ${scene.content.substring(0, 800)}...
+CONTENUTO_COMPLETO: ${scene.content}
 EMOZIONE_DOMINANTE: ${scene.emotionalState || ''}
 SIMBOLI_PRESENTI: ${scene.symbols || ''}
 
-AMBIENTAZIONE: ${wizardData.setting?.name}
-GENERE: ${wizardData.genre?.name}
+ESTRAI ELEMENTI SPECIFICI:
+1. CHI: Quali personaggi sono presenti? Che aspetto hanno? Cosa indossano?
+2. DOVE: Ambiente specifico (non generico). Che stanza? Che mobili? Che oggetti?
+3. COSA: Azione specifica che sta succedendo in quel momento
+4. COME: Posizione dei personaggi, espressioni facciali, gesti
+5. QUANDO: Ora del giorno, tipo di illuminazione
+6. DETTAGLI: Oggetti specifici menzionati (telefono, tazza, porta, specchio, ecc.)
 
-CREA PROMPT VISIVO CHE RISPECCHI ESATTAMENTE IL CONTENUTO:
+CREA PROMPT DETTAGLIATO CHE INCLUDA:
+- Personaggio specifico in azione specifica
+- Ambiente dettagliato con oggetti menzionati
+- Illuminazione che riflette l'emozione
+- Dettagli visivi specifici dal testo
+- Stile fotografico/cinematografico appropriato
 
-REGOLE_PROMPT_VISIVO:
-1. DESCRIVI SOLO CIÒ CHE ACCADE REALMENTE nella scena
-2. USA DETTAGLI SPECIFICI dal contenuto (luoghi, oggetti, azioni)
-3. RIFLETTI L'EMOZIONE DOMINANTE attraverso lighting e composizione
-4. NON inventare elementi non presenti nel testo
-5. MANTIENI COERENZA con il genere e l'ambientazione
-6. LUNGHEZZA: 100-120 caratteri in inglese
+FORMATO: Prompt di 150-200 caratteri in inglese, molto specifico e dettagliato
 
-Scrivi SOLO il prompt visivo finale senza spiegazioni:
+ESEMPIO BUONO: "Man with scar on wrist sitting in dark apartment, checking door lock repeatedly, anxious expression, dim lamp light, shadows on wall, psychological tension, cinematic realism"
+
+ESEMPIO CATTIVO: "emotional horror scene, atmospheric lighting, modern city"
+
+Scrivi SOLO il prompt finale dettagliato:
 `;
 
     try {
       const response = await callLLM(apiKey, SPECIALIZED_MODELS.atmosphere, imagePrompt, 'atmosfera visiva');
       let prompt = response.replace(/['"]/g, '').trim();
+      
+      // Valida che il prompt sia specifico, non generico
+      const genericTerms = ['emotional', 'atmospheric', 'cinematic', 'modern city', 'scene', 'lighting'];
+      const isGeneric = genericTerms.some(term => 
+        prompt.toLowerCase().includes(term) && prompt.split(' ').length < 15
+      );
+      
+      // Se il prompt è troppo generico, crea uno basato sul contenuto
+      if (isGeneric || prompt.length < 80) {
+        prompt = createSpecificImagePrompt(scene, wizardData);
+      }
       
       // Aggiungi elementi di qualità cinematografica
       if (!prompt.includes('cinematic')) {
