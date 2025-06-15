@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,10 +15,10 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
-// Modelli AI specializzati per ruoli specifici
+// Modelli AI specializzati per ruoli specifici - AGGIORNATI CON MODELLI DISPONIBILI
 const SPECIALIZED_MODELS = {
   architect: 'meta-llama/llama-3.2-3b-instruct:free', // Struttura e continuità narrativa
-  psychologist: 'microsoft/phi-3-mini-128k-instruct:free', // Sviluppo psicologico personaggi
+  psychologist: 'meta-llama/llama-3.2-1b-instruct:free', // Sviluppo psicologico personaggi
   writer: 'mistralai/mistral-7b-instruct:free',        // Scrittura scene coinvolgenti
   atmosphere: 'huggingfaceh4/zephyr-7b-beta:free',    // Creazione atmosfera immersiva
   editor: 'openchat/openchat-7b:free'                  // Revisione finale e collegamenti
@@ -25,6 +26,7 @@ const SPECIALIZED_MODELS = {
 
 const FALLBACK_MODELS = [
   'google/gemma-7b-it:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
   'meta-llama/llama-3.2-1b-instruct:free'
 ];
 
