@@ -15,15 +15,24 @@ interface StoryGenerationProps {
   onPrev: () => void;
 }
 
-// SISTEMA SEMPLIFICATO: Un solo LLM principale di alta qualità
-const PRIMARY_MODEL = 'meta-llama/llama-3.3-70b-instruct:free'; // LLM principale per tutto
+// SISTEMA OTTIMIZZATO: 4 LLM specializzati per workflow efficiente
+const SPECIALIZED_MODELS = {
+  promptEngineer: 'meta-llama/llama-3.3-70b-instruct:free',  // FASE 1: Crea prompt perfetto dalle scelte utente
+  storyGenerator: 'qwen/qwq-32b:free',                        // FASE 2: Genera storia completa (32B + contesto lungo)
+  qualityAnalyzer: 'deepseek/deepseek-chat-v3-0324:free',    // FASE 3: Analizza punteggiatura e spaziatura
+  languageCorrector: 'google/gemini-2.0-flash-exp:free'      // FASE 4: Corregge italiano e linguistica
+};
 
 const FALLBACK_MODELS = [
   'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwq-32b:free',
   'deepseek/deepseek-chat-v3-0324:free',
   'google/gemini-2.0-flash-exp:free',
   'google/gemma-3-27b-it:free'
 ];
+
+// API Key di default - fallback se l'utente non ne ha una
+const DEFAULT_API_KEY = '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';
 
 // Sistema di rate limiting per evitare 429
 const MODEL_USAGE_TRACKER = new Map();
@@ -136,285 +145,280 @@ const StoryGeneration: React.FC<StoryGenerationProps> = ({
   onStoryGenerated,
   onPrev
 }) => {
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState(DEFAULT_API_KEY);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [useCustomApiKey, setUseCustomApiKey] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState('');
   const { toast } = useToast();
 
-  const generateImmersiveStory = async (apiKey: string) => {
+  const generateOptimizedStory = async (apiKey: string) => {
     try {
-      setGenerationProgress('🎯 Maestro Narrativo: Creando struttura completa della storia...');
+      setGenerationProgress('🏗️ FASE 1: Llama 3.3 70B - Creando prompt perfetto dalle tue scelte...');
       
-      // Step 1: Genera struttura completa con personaggi e blueprint in una sola chiamata
-      const storyBlueprint = await generateCompleteStoryBlueprint(apiKey);
+      // FASE 1: Prompt Engineer - Crea il prompt ottimale dalle scelte utente
+      const masterPrompt = await createMasterPrompt(apiKey);
       
-      setGenerationProgress('✍️ Maestro Narrativo: Scrivendo le 6 scene della storia...');
+      setGenerationProgress('🧠 FASE 2: Qwen 32B - Generando storia completa in 6 scene...');
       
-      // Step 2: Genera tutte le scene in sequenza con il blueprint
-      const storyScenes = await generateAllScenes(apiKey, storyBlueprint);
+      // FASE 2: Story Generator - Genera l'intera storia con Qwen 32B
+      const rawStory = await generateCompleteStory(apiKey, masterPrompt);
       
-      setGenerationProgress('🎨 Creando prompt visivi specifici per ogni scena...');
+      setGenerationProgress('🔍 FASE 3: DeepSeek - Analizzando punteggiatura e spaziatura...');
       
-      // Step 3: Aggiungi prompt immagini specifici
-      const scenesWithImages = await addAtmosphericImagePrompts(apiKey, storyScenes, '');
+      // FASE 3: Quality Analyzer - Analizza e corregge punteggiatura/spaziatura
+      const analyzedStory = await analyzeStoryQuality(apiKey, rawStory);
       
-      setGenerationProgress('🔧 Assemblando storia finale...');
+      setGenerationProgress('🌟 FASE 4: Gemini 2.0 - Perfezionando italiano e linguistica...');
       
-      // Step 4: Assemblaggio finale
-      const finalStory = createImmersiveStory(storyBlueprint, scenesWithImages, '');
+      // FASE 4: Language Corrector - Corregge italiano e linguistica
+      const finalStory = await correctLanguage(apiKey, analyzedStory);
       
-      return finalStory;
+      setGenerationProgress('🎨 Generando prompt visivi specifici...');
+      
+      // FASE 5: Genera prompt immagini specifici per ogni scena
+      const storyWithImages = await addOptimizedImagePrompts(apiKey, finalStory);
+      
+      setGenerationProgress('✅ Storia completata con successo!');
+      
+      return storyWithImages;
 
     } catch (error) {
-      console.error('Errore nella generazione semplificata:', error);
+      console.error('Errore nella generazione ottimizzata:', error);
+      
+      // Se l'API di default fallisce, chiedi all'utente di inserire la sua
+      if (apiKey === DEFAULT_API_KEY) {
+        setUseCustomApiKey(true);
+        throw new Error('API key di default esaurita. Inserisci la tua API key per continuare.');
+      }
+      
       throw error;
     }
   };
 
-  // NUOVA FUNZIONE SEMPLIFICATA: Genera tutto in una chiamata
-  const generateCompleteStoryBlueprint = async (apiKey: string) => {
-    const completePrompt = `
-Sei un MAESTRO NARRATIVO di livello mondiale. Crea una storia completa e coinvolgente in italiano.
+  // FASE 1: Prompt Engineer - Crea prompt perfetto dalle scelte utente
+  const createMasterPrompt = async (apiKey: string) => {
+    const promptEngineeringRequest = `
+Sei un PROMPT ENGINEER ESPERTO. Analizza le scelte dell'utente e crea un PROMPT PERFETTO per generare una storia completa.
 
-PARAMETRI_STORIA:
+SCELTE UTENTE:
 - PROTAGONISTA: ${wizardData.protagonist?.name} - ${wizardData.protagonist?.description}
 - ANTAGONISTA: ${wizardData.antagonist?.name} - ${wizardData.antagonist?.description}
 - GENERE: ${wizardData.genre?.name}
 - AMBIENTAZIONE: ${wizardData.setting?.name}
 - TRAMA: ${wizardData.plot?.name}
-- STILE_AUTORE: ${wizardData.author?.name}
+- STILE AUTORE: ${wizardData.author?.name}
 
-CREA BLUEPRINT COMPLETO:
+CREA UN PROMPT OTTIMIZZATO CHE:
+1. Integri perfettamente tutte le scelte utente
+2. Specifichi nomi appropriati all'autore scelto
+3. Definisca struttura in 6 scene ben collegate
+4. Includa regole per punteggiatura TTS
+5. Garantisca coerenza narrativa
+6. Eviti caratteri non-latini
+7. Mantenga lunghezza ottimale (4000-5000 parole totali)
 
-TITOLO_STORIA: [Titolo magnetico che cattura l'attenzione]
+FORMATO RISPOSTA:
+PROMPT_OTTIMIZZATO:
+[Il prompt perfetto da usare per generare la storia]
 
-PERSONAGGI_PRINCIPALI:
-PROTAGONISTA_PROFILO:
-NOME_COMPLETO: [Nome appropriato allo stile dell'autore]
-PERSONALITÀ: [3-4 tratti distintivi]
-MOTIVAZIONE: [Cosa vuole veramente]
-PAURA_SEGRETA: [Di cosa ha più paura]
-BACKGROUND: [Passato che lo ha formato]
+NOMI_SUGGERITI:
+PROTAGONISTA: [Nome appropriato all'autore]
+ANTAGONISTA: [Nome appropriato all'autore]
+PERSONAGGI_SECONDARI: [2-3 nomi coerenti]
 
-ANTAGONISTA_PROFILO:
-NOME_COMPLETO: [Nome appropriato allo stile dell'autore]
-PERSONALITÀ: [3-4 tratti distintivi]
-MOTIVAZIONE: [Perché fa quello che fa - deve essere comprensibile]
-METODO: [Come opera]
-DEBOLEZZA: [Punto vulnerabile]
-
-STRUTTURA_6_SCENE:
-
-SCENA_1_INTRODUZIONE:
-TITOLO: [Titolo evocativo]
-OBIETTIVO: [Cosa deve accadere]
-SITUAZIONE_INIZIALE: [Come inizia]
-EVENTO_SCATENANTE: [Cosa innesca la storia]
-EMOZIONE_DOMINANTE: [Emozione principale]
-TRANSIZIONE: [Come si collega alla scena 2]
-
-SCENA_2_SVILUPPO:
-TITOLO: [Titolo evocativo]
-OBIETTIVO: [Cosa deve accadere]
-COMPLICAZIONE: [Il problema si intensifica]
-RIVELAZIONE: [Nuova informazione importante]
-EMOZIONE_DOMINANTE: [Emozione principale]
-TRANSIZIONE: [Come si collega alla scena 3]
-
-SCENA_3_PRIMO_CLIMAX:
-TITOLO: [Titolo evocativo]
-OBIETTIVO: [Cosa deve accadere]
-CONFRONTO: [Prima battaglia/confronto]
-SVOLTA: [Cambio di direzione]
-EMOZIONE_DOMINANTE: [Emozione principale]
-TRANSIZIONE: [Come si collega alla scena 4]
-
-SCENA_4_CRISI:
-TITOLO: [Titolo evocativo]
-OBIETTIVO: [Cosa deve accadere]
-MOMENTO_BUIO: [Tutto sembra perduto]
-RIVELAZIONE_CHIAVE: [Informazione cruciale]
-EMOZIONE_DOMINANTE: [Emozione principale]
-TRANSIZIONE: [Come si collega alla scena 5]
-
-SCENA_5_RINASCITA:
-TITOLO: [Titolo evocativo]
-OBIETTIVO: [Cosa deve accadere]
-CONTRATTACCO: [Il protagonista reagisce]
-PREPARAZIONE: [Si prepara per il finale]
-EMOZIONE_DOMINANTE: [Emozione principale]
-TRANSIZIONE: [Come si collega alla scena 6]
-
-SCENA_6_RISOLUZIONE:
-TITOLO: [Titolo evocativo]
-OBIETTIVO: [Cosa deve accadere]
-CLIMAX_FINALE: [Confronto decisivo]
-RISOLUZIONE: [Come si conclude]
-EMOZIONE_DOMINANTE: [Emozione principale]
-MESSAGGIO_FINALE: [Cosa lascia al lettore]
-
-REGOLE_NOMI_OBBLIGATORIE:
-1. NOMI APPROPRIATI ALL'AUTORE ${wizardData.author?.name}:
-   - Stephen King: Jack, Danny, Carrie, Paul, Annie, Ben, Beverly, Wendy
-   - Agatha Christie: Hercule, Miss Marple, Hastings, Poirot, nomi inglesi
-   - George R.R. Martin: Tyrion, Arya, Jon, Cersei, Daenerys, nomi fantasy
-   - Edgar Allan Poe: Edgar, Roderick, Ligeia, Morella, nomi gotici
-   - Arthur Conan Doyle: Sherlock, Watson, Mycroft, Lestrade
-2. EVITA nomi generici come "Luca", "Marco", "Anna", "Giuseppe"
-3. COERENZA con ambientazione e epoca
-4. SOLO ITALIANO PURO - niente caratteri stranieri
-
-Scrivi tutto nei dettagli, ogni sezione DEVE essere completa e specifica.
+STRUTTURA_SCENE:
+SCENA_1: [Titolo e obiettivo]
+SCENA_2: [Titolo e obiettivo]
+SCENA_3: [Titolo e obiettivo]
+SCENA_4: [Titolo e obiettivo]
+SCENA_5: [Titolo e obiettivo]
+SCENA_6: [Titolo e obiettivo]
 `;
 
-    return await callLLM(apiKey, PRIMARY_MODEL, completePrompt, 'maestro narrativo');
+    return await callLLM(apiKey, SPECIALIZED_MODELS.promptEngineer, promptEngineeringRequest, 'prompt engineer');
   };
 
-  // NUOVA FUNZIONE: Genera tutte le scene in sequenza
-  const generateAllScenes = async (apiKey: string, storyBlueprint: string) => {
+  // FASE 2: Story Generator - Genera storia completa con Qwen 32B
+  const generateCompleteStory = async (apiKey: string, masterPrompt: string) => {
+    const storyGenerationPrompt = `
+${masterPrompt}
+
+GENERA ORA LA STORIA COMPLETA seguendo esattamente il prompt ottimizzato sopra.
+
+REGOLE CRITICHE:
+1. SOLO ITALIANO CORRETTO - niente caratteri stranieri
+2. STRUTTURA: 6 scene ben definite e collegate
+3. LUNGHEZZA: 4000-5000 parole totali (650-850 per scena)
+4. PUNTEGGIATURA TTS: Usa ";" per suspense, ":" per rivelazioni, "," per ritmo
+5. NOMI COERENTI con l'autore scelto
+6. CONTINUITÀ NARRATIVA perfetta tra scene
+7. DIALOGHI REALISTICI con attribuzioni chiare
+
+FORMATO OBBLIGATORIO:
+TITOLO_STORIA: [Titolo accattivante]
+
+SCENA_1: [Titolo scena]
+[Contenuto scena 1 - 650-850 parole]
+
+SCENA_2: [Titolo scena]
+[Contenuto scena 2 - 650-850 parole]
+
+SCENA_3: [Titolo scena]
+[Contenuto scena 3 - 650-850 parole]
+
+SCENA_4: [Titolo scena]
+[Contenuto scena 4 - 650-850 parole]
+
+SCENA_5: [Titolo scena]
+[Contenuto scena 5 - 650-850 parole]
+
+SCENA_6: [Titolo scena]
+[Contenuto scena 6 - 650-850 parole]
+
+SCRIVI LA STORIA COMPLETA ORA:
+`;
+
+    return await callLLM(apiKey, SPECIALIZED_MODELS.storyGenerator, storyGenerationPrompt, 'story generator');
+  };
+
+  // FASE 3: Quality Analyzer - Analizza e corregge punteggiatura/spaziatura
+  const analyzeStoryQuality = async (apiKey: string, rawStory: string) => {
+    const qualityAnalysisPrompt = `
+Sei un QUALITY ANALYZER ESPERTO. Analizza questa storia e correggi SOLO problemi di punteggiatura e spaziatura.
+
+STORIA DA ANALIZZARE:
+${rawStory}
+
+ANALIZZA E CORREGGI:
+1. PUNTEGGIATURA ECCESSIVA: Rimuovi sequenze come "...", "!!!", "???"
+2. SPAZIATURA ERRATA: Correggi spazi multipli, righe vuote eccessive
+3. VIRGOLETTE MALFORMATE: Sistema virgolette aperte/chiuse
+4. PUNTI E VIRGOLE: Ottimizza per lettura TTS fluida
+5. CARATTERI STRANI: Rimuovi simboli non-latini
+6. ASTERISCHI ISOLATI: Rimuovi * sparsi nel testo
+
+NON MODIFICARE:
+- Il contenuto narrativo
+- I dialoghi (solo la punteggiatura)
+- La struttura delle scene
+- I nomi dei personaggi
+
+RESTITUISCI LA STORIA CON SOLO LE CORREZIONI DI PUNTEGGIATURA E SPAZIATURA:
+`;
+
+    return await callLLM(apiKey, SPECIALIZED_MODELS.qualityAnalyzer, qualityAnalysisPrompt, 'quality analyzer');
+  };
+
+  // FASE 4: Language Corrector - Corregge italiano e linguistica
+  const correctLanguage = async (apiKey: string, analyzedStory: string) => {
+    const languageCorrectionPrompt = `
+Sei un CORRETTORE LINGUISTICO ESPERTO di italiano. Perfeziona questa storia mantenendo il contenuto invariato.
+
+STORIA DA CORREGGERE:
+${analyzedStory}
+
+CORREGGI SOLO:
+1. ERRORI GRAMMATICALI: Concordanze, tempi verbali, sintassi
+2. LESSICO: Sostituisci parole ripetitive con sinonimi appropriati
+3. FLUIDITÀ: Migliora la scorrevolezza delle frasi
+4. REGISTRO: Mantieni coerenza stilistica
+5. PUNTEGGIATURA FINE: Ottimizza per lettura naturale
+6. CONNETTIVI: Migliora i collegamenti tra frasi
+
+MANTIENI INVARIATO:
+- La trama e gli eventi
+- I nomi dei personaggi
+- La struttura in 6 scene
+- La lunghezza complessiva
+- Lo stile narrativo dell'autore
+
+RESTITUISCI LA STORIA LINGUISTICAMENTE PERFETTA:
+`;
+
+    return await callLLM(apiKey, SPECIALIZED_MODELS.languageCorrector, languageCorrectionPrompt, 'language corrector');
+  };
+
+  // FASE 5: Genera prompt immagini ottimizzati
+  const addOptimizedImagePrompts = async (apiKey: string, finalStory: string) => {
+    // Parse della storia in scene
+    const scenes = parseStoryIntoScenes(finalStory);
+    
+    // Aggiungi prompt immagini specifici per ogni scena
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      scene.imagePrompt = createSpecificImagePrompt(scene, wizardData);
+    }
+    
+    return {
+      title: extractStoryTitle(finalStory),
+      scenes: scenes,
+      totalWords: finalStory.split(/\s+/).length,
+      estimatedReadingTime: Math.ceil(finalStory.split(/\s+/).length / 200)
+    };
+  };
+
+  // Helper: Parse storia in scene
+  const parseStoryIntoScenes = (storyText: string) => {
     const scenes = [];
+    const sceneMatches = storyText.match(/SCENA_\d+:\s*(.+?)\n([\s\S]*?)(?=SCENA_\d+:|$)/g) || [];
     
-    // Estrai le strutture delle scene dal blueprint
-    const sceneMatches = storyBlueprint.match(/SCENA_\d+_[A-Z]+:[\s\S]*?(?=SCENA_\d+_|REGOLE_NOMI|$)/g) || [];
+    for (let i = 0; i < sceneMatches.length; i++) {
+      const sceneMatch = sceneMatches[i];
+      const titleMatch = sceneMatch.match(/SCENA_\d+:\s*(.+)/);
+      const contentMatch = sceneMatch.match(/SCENA_\d+:\s*.+?\n([\s\S]*)/);
+      
+      const title = titleMatch ? titleMatch[1].trim() : `Scena ${i + 1}`;
+      let content = contentMatch ? contentMatch[1].trim() : '';
+      
+      // Pulizia contenuto
+      content = cleanAndValidateContent(content);
+      
+      scenes.push({
+        id: `scene-${i + 1}`,
+        title: title,
+        content: content,
+        emotionalState: 'Coinvolgimento emotivo',
+        emotionalHook: `Collegamento verso scena ${i + 2}`,
+        symbols: 'Elementi narrativi',
+        imagePrompt: ''
+      });
+    }
     
-    for (let i = 0; i < Math.min(sceneMatches.length, 6); i++) {
-      const sceneStructure = sceneMatches[i];
+    return scenes.length > 0 ? scenes : createFallbackScenes(storyText);
+  };
+
+  // Helper: Estrai titolo storia
+  const extractStoryTitle = (storyText: string) => {
+    const titleMatch = storyText.match(/TITOLO_STORIA:\s*(.+)/i);
+    return titleMatch ? titleMatch[1].trim() : 'Storia Generata';
+  };
+
+  // Helper: Crea scene di fallback se il parsing fallisce
+  const createFallbackScenes = (storyText: string) => {
+    const paragraphs = storyText.split('\n\n').filter(p => p.trim().length > 100);
+    const scenes = [];
+    const scenesPerPart = Math.ceil(paragraphs.length / 6);
+    
+    for (let i = 0; i < 6; i++) {
+      const startIdx = i * scenesPerPart;
+      const endIdx = Math.min((i + 1) * scenesPerPart, paragraphs.length);
+      const sceneContent = paragraphs.slice(startIdx, endIdx).join('\n\n');
       
-      setGenerationProgress(`✍️ Scrivendo scena ${i + 1}/6...`);
-      
-      try {
-        const sceneContent = await generateSingleScene(apiKey, i + 1, sceneStructure, storyBlueprint, scenes);
-        scenes.push(sceneContent);
-        
-        // Pausa per evitare rate limiting
-        if (i < 5) await new Promise(resolve => setTimeout(resolve, 2000));
-        
-      } catch (error) {
-        console.error(`Errore nella scena ${i + 1}:`, error);
-        
-        try {
-          // Fallback con modello diverso
-          const fallbackModel = getLeastUsedModel(FALLBACK_MODELS);
-          const fallbackContent = await generateSingleScene(apiKey, i + 1, sceneStructure, storyBlueprint, scenes, fallbackModel);
-          scenes.push(fallbackContent);
-          
-        } catch (fallbackError) {
-          // Ultimo resort: placeholder
-          scenes.push(createScenePlaceholder(i + 1, sceneStructure));
-        }
+      if (sceneContent.trim()) {
+        scenes.push({
+          id: `scene-${i + 1}`,
+          title: `Scena ${i + 1}`,
+          content: cleanAndValidateContent(sceneContent),
+          emotionalState: 'Sviluppo narrativo',
+          emotionalHook: `Transizione verso scena ${i + 2}`,
+          symbols: 'Continuità narrativa',
+          imagePrompt: ''
+        });
       }
     }
     
     return scenes;
-  };
-
-  // Genera una singola scena con prompt semplificato
-  const generateSingleScene = async (apiKey: string, sceneNumber: number, sceneStructure: string, fullBlueprint: string, previousScenes: any[], customModel?: string) => {
-    const model = customModel || PRIMARY_MODEL;
-    
-    const scenePrompt = `
-Scrivi la SCENA ${sceneNumber} di una storia in italiano seguendo questa struttura:
-
-BLUEPRINT_COMPLETO:
-${fullBlueprint.substring(0, 1500)}
-
-STRUTTURA_SCENA_${sceneNumber}:
-${sceneStructure}
-
-SCENE_PRECEDENTI:
-${previousScenes.map((scene, idx) => `Scena ${idx + 1}: ${scene.title} - ${scene.content.substring(0, 200)}...`).join('\n\n')}
-
-REGOLE_SCRITTURA:
-1. LUNGHEZZA: 800-1000 parole
-2. STILE: Coinvolgente e immersivo
-3. LINGUA: Solo italiano corretto
-4. CONTINUITÀ: Collega fluidamente alle scene precedenti
-5. STRUTTURA: Inizio-Sviluppo-Climax-Transizione
-6. DIALOGHI: Realistici e caratterizzanti
-7. DESCRIZIONI: Bilanciate, non eccessive
-8. PUNTEGGIATURA TTS: Usa ";" per suspense, ":" per rivelazioni, "," per ritmo
-
-FORMATO_RISPOSTA:
-TITOLO: [Titolo evocativo della scena]
-
-CONTENUTO:
-[Scrivi qui la scena completa seguendo le regole sopra]
-
-EMOZIONE_FINALE: [Emozione dominante alla fine della scena]
-
-GANCIO: [Una frase che collega alla scena successiva]
-`;
-
-    const response = await callLLM(apiKey, model, scenePrompt, 'maestro narrativo');
-    return parseSimpleScene(response, sceneNumber);
-  };
-
-  // Parsing semplificato per le scene
-  const parseSimpleScene = (content: string, sceneNumber: number) => {
-    let title = `Scena ${sceneNumber}`;
-    let sceneContent = '';
-    let emotion = 'Tensione narrativa';
-    let hook = `Collegamento verso scena ${sceneNumber + 1}`;
-
-    // Estrai titolo
-    const titleMatch = content.match(/TITOLO:\s*(.+)/i);
-    if (titleMatch) {
-      title = titleMatch[1].trim().replace(/["']/g, '');
-    }
-
-    // Estrai contenuto
-    const contentMatch = content.match(/CONTENUTO:\s*([\s\S]*?)(?=EMOZIONE_FINALE:|GANCIO:|$)/i);
-    if (contentMatch) {
-      sceneContent = contentMatch[1].trim();
-    }
-
-    // Estrai emozione
-    const emotionMatch = content.match(/EMOZIONE_FINALE:\s*(.+)/i);
-    if (emotionMatch) {
-      emotion = emotionMatch[1].trim().replace(/["']/g, '');
-    }
-
-    // Estrai gancio
-    const hookMatch = content.match(/GANCIO:\s*(.+)/i);
-    if (hookMatch) {
-      hook = hookMatch[1].trim().replace(/["']/g, '');
-    }
-
-    // Se il contenuto è vuoto o troppo corto, usa il contenuto grezzo pulito
-    if (!sceneContent || sceneContent.length < 200) {
-      sceneContent = content.replace(/TITOLO:.*?\n/i, '').replace(/EMOZIONE_FINALE:.*$/i, '').replace(/GANCIO:.*$/i, '').trim();
-    }
-
-    // Pulizia finale
-    sceneContent = cleanAndValidateContent(sceneContent);
-
-    return {
-      id: `scene-${sceneNumber}`,
-      title: title,
-      content: sceneContent,
-      emotionalState: emotion,
-      emotionalHook: hook,
-      symbols: 'Elementi narrativi',
-      imagePrompt: ''
-    };
-  };
-
-  // Placeholder per scene fallite
-  const createScenePlaceholder = (sceneNumber: number, sceneStructure: string) => {
-    return {
-      id: `scene-${sceneNumber}`,
-      title: `Scena ${sceneNumber} - Da rigenerare`,
-      content: `La storia continua con la scena ${sceneNumber}. I personaggi affrontano nuove sfide mentre la trama si sviluppa verso il climax. Ogni momento è carico di tensione e significato, portando il lettore sempre più in profondità nella narrazione.
-
-Gli eventi si susseguono con un ritmo incalzante, mentre i protagonisti devono fare i conti con le conseguenze delle loro azioni precedenti. La situazione si complica ulteriormente, creando nuovi ostacoli da superare.
-
-Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si preparano per il confronto finale. Ogni decisione potrebbe cambiare il corso degli eventi in modo irreversibile.`,
-      emotionalState: 'Tensione crescente',
-      emotionalHook: `Collegamento verso scena ${sceneNumber + 1}`,
-      symbols: 'Elementi di continuità narrativa',
-      imagePrompt: ''
-    };
   };
 
   const generateCharacterPsychology = async (apiKey: string) => {
@@ -477,7 +481,7 @@ MOMENTO_RICONOSCIMENTO: [Quando si capiscono veramente]
 Scrivi tutto nei dettagli, ogni aspetto DEVE essere specifico e unico.
 `;
 
-    return await callLLM(apiKey, PRIMARY_MODEL, psychologyPrompt, 'maestro narrativo');
+    return await callLLM(apiKey, SPECIALIZED_MODELS.psychologist, psychologyPrompt, 'psicologo narrativo');
   };
 
   const generateEmotionalBlueprint = async (apiKey: string, characterProfiles: string) => {
@@ -568,7 +572,7 @@ SORPRESE_CARATTERE: [Rivelazioni sui personaggi]
 Ogni elemento DEVE essere dettagliato e specifico per questa storia.
 `;
 
-    return await callLLM(apiKey, PRIMARY_MODEL, blueprintPrompt, 'maestro narrativo');
+    return await callLLM(apiKey, SPECIALIZED_MODELS.architect, blueprintPrompt, 'architetto emotivo');
   };
 
   const generateAtmosphericElements = async (apiKey: string, blueprint: string) => {
@@ -622,7 +626,7 @@ CONTINUITÀ_SENSORIALE: [Elementi che legano le atmosfere]
 Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
 `;
 
-    return await callLLM(apiKey, PRIMARY_MODEL, atmospherePrompt, 'maestro narrativo');
+    return await callLLM(apiKey, SPECIALIZED_MODELS.atmosphere, atmospherePrompt, 'maestro atmosfera');
   };
 
   const generateImmersiveScenes = async (apiKey: string, characterProfiles: string, blueprint: string, atmosphericElements: string) => {
@@ -682,7 +686,7 @@ Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
             
           } catch (simpleError) {
             console.error(`❌ Anche prompt semplificato fallito per scena ${i + 1}`);
-            scenes.push(createEmotionalPlaceholder(i + 1, sceneStructure));
+          scenes.push(createEmotionalPlaceholder(i + 1, sceneStructure));
           }
         }
       }
@@ -701,7 +705,7 @@ Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
     sceneNumber: number,
     customModel?: string
   ) => {
-    const model = customModel || PRIMARY_MODEL;
+    const model = customModel || SPECIALIZED_MODELS.writer;
     
     // Crea contesto di continuità dettagliato dalle scene precedenti
     const continuityContext = previousScenes.length > 0 
@@ -897,7 +901,7 @@ ELEMENTI_SIMBOLICI: [Simboli e metafore presenti]
 Rendi questa scena indimenticabile.
 `;
 
-          const response = await callLLM(apiKey, PRIMARY_MODEL, polishPrompt, 'maestro narrativo');
+    const response = await callLLM(apiKey, SPECIALIZED_MODELS.editor, polishPrompt, 'editor emotivo');
     return parseEmotionalScene(response, sceneNumber, scene);
   };
 
@@ -1042,7 +1046,7 @@ Scrivi SOLO il prompt finale dettagliato:
 `;
 
     try {
-      const response = await callLLM(apiKey, PRIMARY_MODEL, imagePrompt, 'maestro narrativo');
+      const response = await callLLM(apiKey, SPECIALIZED_MODELS.atmosphere, imagePrompt, 'atmosfera visiva');
       let prompt = response.replace(/['"]/g, '').trim();
       
       // Valida che il prompt sia specifico, non generico
@@ -1091,35 +1095,35 @@ Scrivi SOLO il prompt finale dettagliato:
     MODEL_USAGE_TRACKER.set(model, recentRequests);
     
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'StoryMaster AI'
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            {
-              role: 'system',
-              content: `Sei un ${role} di livello mondiale. Crei storie che catturano il lettore emotivamente e lo tengono incollato. Scrivi sempre in italiano con prosa fluida e coinvolgente. Ogni parola deve servire a immergere il lettore.`
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: role.includes('psicologo') || role.includes('architetto') ? 0.4 : 0.7,
-          max_tokens: role.includes('atmosfera') ? 1500 : 2200,
-          top_p: 0.9,
-          frequency_penalty: 0.3,
-          presence_penalty: 0.6
-        }),
-      });
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'StoryMaster AI'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: `Sei un ${role} di livello mondiale. Crei storie che catturano il lettore emotivamente e lo tengono incollato. Scrivi sempre in italiano con prosa fluida e coinvolgente. Ogni parola deve servire a immergere il lettore.`
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: role.includes('psicologo') || role.includes('architetto') ? 0.4 : 0.7,
+        max_tokens: role.includes('atmosfera') ? 1500 : 2200,
+        top_p: 0.9,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.6
+      }),
+    });
 
-      if (!response.ok) {
+    if (!response.ok) {
         // Gestione specifica per errore 429 (Rate Limit)
         if (response.status === 429) {
           console.warn(`⚠️ Rate limit raggiunto per ${model}, tentativo ${retryCount + 1}/${maxRetries}`);
@@ -1140,10 +1144,10 @@ Scrivi SOLO il prompt finale dettagliato:
           }
         }
         
-        throw new Error(`HTTP error! status: ${response.status} - Model: ${model}`);
-      }
+      throw new Error(`HTTP error! status: ${response.status} - Model: ${model}`);
+    }
 
-      const data = await response.json();
+    const data = await response.json();
       let content = data.choices[0]?.message?.content || '';
       
       // VALIDAZIONE CRITICA: Controlla se il contenuto è spazzatura
@@ -1414,9 +1418,9 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
   };
 
   const createImmersiveStory = (blueprint: string, scenes: any[], characterProfiles: string) => {
-    // Estrai il titolo dal blueprint (nuovo formato)
-    const titleMatch = blueprint.match(/TITOLO_STORIA:\s*(.+)/) || blueprint.match(/TITOLO_MAGNETICO:\s*(.+)/);
-    const title = titleMatch ? titleMatch[1].trim().replace(/["'\[\]]/g, '') : 'Storia Coinvolgente';
+    // Estrai il titolo dal blueprint
+    const titleMatch = blueprint.match(/TITOLO_MAGNETICO:\s*(.+)/);
+    const title = titleMatch ? titleMatch[1].trim() : 'Storia Immersiva con Personaggi Profondi';
 
     // Calcola statistiche
     let totalWordCount = 0;
@@ -1427,31 +1431,18 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
 
     const estimatedReadingTime = Math.max(1, Math.ceil(totalWordCount / 200));
 
-    // Validazione scene
-    const validScenes = scenes.filter(scene => 
-      scene && 
-      scene.title && 
-      scene.content && 
-      scene.content.length > 100
-    );
-
-    if (validScenes.length === 0) {
-      console.error('❌ Nessuna scena valida generata');
-      throw new Error('Nessuna scena valida generata');
-    }
-
     const story = {
       id: Date.now().toString(),
-      title: title || 'Storia Generata',
-      content: validScenes.map(scene => scene.content).join('\n\n'),
-      scenes: validScenes,
+      title: title,
+      content: scenes.map(scene => scene.content).join('\n\n'),
+      scenes: scenes,
       estimatedReadingTime,
       wordCount: totalWordCount,
-      immersionLevel: 'Alta', // Indica qualità della continuità
-      characterDepth: 'Sviluppata',
-      emotionalImpact: 'Coinvolgente',
-      blueprint: blueprint || '', // Conserva la mappa narrativa
-      characterProfiles: characterProfiles || ''
+      immersionLevel: 'Massima', // Indica qualità della continuità
+      characterDepth: 'Profonda',
+      emotionalImpact: 'Alto',
+      blueprint: blueprint, // Conserva la mappa narrativa
+      characterProfiles: characterProfiles
     };
 
     console.log('Storia immersiva completata:', {
@@ -1480,11 +1471,11 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
     onApiKeySet(apiKey);
     
     try {
-      const story = await generateImmersiveStory(apiKey);
+      const story = await generateOptimizedStory(apiKey);
       
       toast({
-        title: "Storia Completata!",
-        description: `${story.scenes.length} scene coerenti e coinvolgenti, ${story.wordCount} parole di alta qualità!`,
+        title: "Storia Immersiva Completata!",
+        description: `${story.scenes.length} scene con personaggi profondi e atmosfere coinvolgenti, ${story.totalWords} parole di qualità emotiva!`,
       });
 
       onStoryGenerated(story);
@@ -1520,13 +1511,13 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-orange-600/20 rounded-full border border-purple-500/30">
           <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="text-sm font-medium">Sistema Semplificato - LLM Principale</span>
+          <span className="text-sm font-medium">Sistema Immersivo - 5 LLM Specializzati</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-gradient animate-float">
           Storie che Catturano il Cuore
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Un potente LLM crea storie coerenti e coinvolgenti con personaggi profondi e atmosfere immersive!
+          5 AI specializzati creano personaggi profondi e atmosfere immersive che rendono impossibile smettere di leggere!
         </p>
       </div>
 
@@ -1582,51 +1573,101 @@ Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si p
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="apikey">API Key</Label>
-            <div className="flex gap-2">
-              <Input
-                id="apikey"
-                type={showApiKey ? "text" : "password"}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-or-v1-..."
-                className="bg-input/50"
-                disabled={isGenerating}
-              />
+          {!useCustomApiKey ? (
+            <div className="space-y-3">
+              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-semibold text-green-400">API Key di Default Attiva</span>
+                </div>
+                <p className="text-sm text-green-300">
+                  ✅ Puoi generare storie immediatamente! L'API key è già configurata e pronta all'uso.
+                </p>
+                <p className="text-xs text-green-400 mt-1">
+                  Se dovesse esaurirsi, potrai inserire la tua API key personale.
+                </p>
+              </div>
               <Button
+                type="button"
                 variant="outline"
-                size="icon"
-                onClick={() => setShowApiKey(!showApiKey)}
+                size="sm"
+                onClick={() => setUseCustomApiKey(true)}
+                className="w-full"
                 disabled={isGenerating}
               >
-                <Eye className="w-4 h-4" />
+                <Key className="h-4 w-4 mr-2" />
+                Usa la mia API Key personale
               </Button>
             </div>
-          </div>
-          
-          <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-3">🎯 Sistema Semplificato e Ottimizzato:</h4>
-            <div className="grid grid-cols-1 gap-3 text-sm">
-              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
-                <div>
-                  <div className="font-medium text-purple-300">Blueprint Completo</div>
-                  <div className="text-muted-foreground">Crea struttura, personaggi e trama in una volta</div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="apikey">API Key Personale</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="apikey"
+                    type={showApiKey ? "text" : "password"}
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="sk-or-v1-..."
+                    className="bg-input/50"
+                    disabled={isGenerating}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    disabled={isGenerating}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setUseCustomApiKey(false);
+                  setApiKey(DEFAULT_API_KEY);
+                }}
+                className="w-full"
+                disabled={isGenerating}
+              >
+                Torna all'API Key di default
+              </Button>
+            </div>
+          )}
+          
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-semibold mb-3">🚀 Sistema Ottimizzato con 4 LLM Specializzati:</h4>
+            <div className="grid grid-cols-1 gap-3 text-sm">
               <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
                 <div>
-                  <div className="font-medium text-blue-300">Generazione Scene</div>
-                  <div className="text-muted-foreground">Scrive le 6 scene con stile coerente</div>
+                  <div className="font-medium text-blue-300">Llama 3.3 70B - Prompt Engineer</div>
+                  <div className="text-muted-foreground">Crea il prompt perfetto dalle tue scelte</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
+                <div>
+                  <div className="font-medium text-purple-300">Qwen 32B - Story Generator</div>
+                  <div className="text-muted-foreground">Genera l'intera storia in 6 scene collegate</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
                 <div>
-                  <div className="font-medium text-green-300">Prompt Immagini</div>
-                  <div className="text-muted-foreground">Genera prompt specifici per ogni scena</div>
+                  <div className="font-medium text-green-300">DeepSeek - Quality Analyzer</div>
+                  <div className="text-muted-foreground">Analizza punteggiatura e spaziatura</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">4</div>
+                <div>
+                  <div className="font-medium text-orange-300">Gemini 2.0 - Language Corrector</div>
+                  <div className="text-muted-foreground">Perfeziona italiano e linguistica</div>
                 </div>
               </div>
             </div>
