@@ -17,14 +17,15 @@ interface StoryGenerationProps {
 // Modelli AI specializzati per ruoli specifici
 const SPECIALIZED_MODELS = {
   architect: 'meta-llama/llama-3.2-3b-instruct:free', // Struttura e continuità narrativa
-  writer: 'microsoft/phi-3-mini-128k-instruct:free',   // Scrittura scene coinvolgenti
-  editor: 'mistralai/mistral-7b-instruct:free',        // Revisione e collegamenti
-  continuity: 'huggingfaceh4/zephyr-7b-beta:free'      // Controllo continuità tra scene
+  psychologist: 'microsoft/phi-3-mini-128k-instruct:free', // Sviluppo psicologico personaggi
+  writer: 'mistralai/mistral-7b-instruct:free',        // Scrittura scene coinvolgenti
+  atmosphere: 'huggingfaceh4/zephyr-7b-beta:free',    // Creazione atmosfera immersiva
+  editor: 'openchat/openchat-7b:free'                  // Revisione finale e collegamenti
 };
 
 const FALLBACK_MODELS = [
-  'openchat/openchat-7b:free',
-  'google/gemma-7b-it:free'
+  'google/gemma-7b-it:free',
+  'meta-llama/llama-3.2-1b-instruct:free'
 ];
 
 const StoryGeneration: React.FC<StoryGenerationProps> = ({
@@ -40,179 +41,285 @@ const StoryGeneration: React.FC<StoryGenerationProps> = ({
   const [generationProgress, setGenerationProgress] = useState('');
   const { toast } = useToast();
 
-  const generateContinuousStory = async (apiKey: string) => {
+  const generateImmersiveStory = async (apiKey: string) => {
     try {
-      setGenerationProgress('🏗️ LLM Architetto: Creando mappa narrativa con cliffhanger...');
+      setGenerationProgress('🧠 LLM Psicologo: Creando profili psicologici dei personaggi...');
       
-      // Step 1: Architetto crea struttura con continuità perfetta
-      const storyBlueprint = await generateStoryBlueprint(apiKey);
+      // Step 1: Sviluppo psicologico dettagliato dei personaggi
+      const characterProfiles = await generateCharacterPsychology(apiKey);
       
-      setGenerationProgress('✍️ LLM Scrittore: Tessendo scene collegate...');
+      setGenerationProgress('🏗️ LLM Architetto: Tessendo mappa narrativa con archi emotivi...');
       
-      // Step 2: Scrittore genera scene con perfetta continuità
-      const connectedScenes = await generateConnectedScenes(apiKey, storyBlueprint);
+      // Step 2: Architetto crea struttura con archi emotivi
+      const emotionalBlueprint = await generateEmotionalBlueprint(apiKey, characterProfiles);
       
-      setGenerationProgress('🔗 LLM Continuità: Verificando collegamenti narrativi...');
+      setGenerationProgress('🌍 LLM Atmosfera: Creando ambientazioni immersive e sensoriali...');
       
-      // Step 3: Controllo continuità e aggiustamenti
-      const verifiedScenes = await verifyContinuityAndAdjust(apiKey, connectedScenes, storyBlueprint);
+      // Step 3: Creazione atmosfere dettagliate per ogni scena
+      const atmosphericElements = await generateAtmosphericElements(apiKey, emotionalBlueprint);
       
-      setGenerationProgress('📝 LLM Editor: Perfezionando transizioni e suspense...');
+      setGenerationProgress('✍️ LLM Scrittore: Tessendo scene con profondità emotiva...');
       
-      // Step 4: Editor perfeziona transizioni e suspense
-      const polishedScenes = await polishTransitionsAndSuspense(apiKey, verifiedScenes);
+      // Step 4: Scrittore genera scene immersive
+      const immersiveScenes = await generateImmersiveScenes(apiKey, characterProfiles, emotionalBlueprint, atmosphericElements);
       
-      setGenerationProgress('🎨 Ottimizzando prompt visivi narrativi...');
+      setGenerationProgress('📝 LLM Editor: Intensificando coinvolgimento emotivo...');
       
-      // Step 5: Prompt immagini che riflettono la continuità
-      const scenesWithImages = await addContinuityImagePrompts(apiKey, polishedScenes);
+      // Step 5: Editor perfeziona l'immersione
+      const finalScenes = await polishEmotionalImmersion(apiKey, immersiveScenes, characterProfiles);
       
-      setGenerationProgress('🔧 Assemblando storia con continuità perfetta...');
+      setGenerationProgress('🎨 Creando prompt visivi atmosferici...');
       
-      // Step 6: Assemblaggio finale con controllo qualità
-      const finalStory = createContinuousStory(storyBlueprint, scenesWithImages);
+      // Step 6: Prompt immagini che riflettono la continuità
+      const scenesWithAtmosphericImages = await addAtmosphericImagePrompts(apiKey, finalScenes, atmosphericElements);
+      
+      setGenerationProgress('🔧 Assemblando storia immersiva...');
+      
+      // Step 7: Assemblaggio finale con controllo qualità
+      const finalStory = createImmersiveStory(emotionalBlueprint, scenesWithAtmosphericImages, characterProfiles);
       
       return finalStory;
 
     } catch (error) {
-      console.error('Errore nella generazione continua:', error);
+      console.error('Errore nella generazione immersiva:', error);
       throw error;
     }
   };
 
-  const generateStoryBlueprint = async (apiKey: string) => {
-    const blueprintPrompt = `
-Sei un ARCHITETTO NARRATIVO MAESTRO della continuità. Crea una MAPPA NARRATIVA PERFETTA con collegamenti irresistibili:
+  const generateCharacterPsychology = async (apiKey: string) => {
+    const psychologyPrompt = `
+Sei uno PSICOLOGO NARRATIVO ESPERTO. Crea profili psicologici PROFONDI e COINVOLGENTI per questi personaggi:
 
-PARAMETRI STORIA:
-- GENERE: ${wizardData.genre?.name} - ${wizardData.genre?.description}
-- STILE: ${wizardData.author?.name} - ${wizardData.author?.description}
-- PROTAGONISTA: ${wizardData.protagonist?.name} - ${wizardData.protagonist?.description}
-- ANTAGONISTA: ${wizardData.antagonist?.name} - ${wizardData.antagonist?.description}
-- AMBIENTAZIONE: ${wizardData.setting?.name} - ${wizardData.setting?.description}
-- TRAMA: ${wizardData.plot?.name} - ${wizardData.plot?.description}
+PROTAGONISTA: ${wizardData.protagonist?.name} - ${wizardData.protagonist?.description}
+ANTAGONISTA: ${wizardData.antagonist?.name} - ${wizardData.antagonist?.description}
 
-COMPITO: Crea una STRUTTURA NARRATIVA CON CONTINUITÀ PERFETTA
+GENERE: ${wizardData.genre?.name} - Questo influenza la psicologia
+AMBIENTAZIONE: ${wizardData.setting?.name} - Come plasma i personaggi
 
-TITOLO: [Titolo che cattura l'essenza della storia]
+CREA PROFILI PSICOLOGICI DETTAGLIATI:
 
-FILO_CONDUTTORE_PRINCIPALE:
-MISTERO_CENTRALE: [Il grande mistero che attraversa tutta la storia]
-OGGETTO_RICORRENTE: [Elemento fisico che appare in ogni scena]
-SEGRETO_RIVELATO_GRADUALMENTE: [Cosa si scopre poco alla volta]
-MINACCIA_CRESCENTE: [Come il pericolo aumenta progressivamente]
+PROTAGONISTA_PSICOLOGIA:
+TRAUMA_PASSATO: [Evento che ha formato il carattere]
+DESIDERIO_PROFONDO: [Cosa vuole veramente nel cuore]
+PAURA_NASCOSTA: [Di cosa ha più paura]
+CONTRADDIZIONE_INTERNA: [Conflitto interno che lo rende umano]
+LINGUAGGIO_CORPOREO: [Come si muove, gesticola]
+ABITUDINI_NERVOSE: [Tic, gesti involontari]
+DIALOGO_CARATTERISTICO: [Come parla, espressioni tipiche]
+ARCO_EMOTIVO: [Come cambierà durante la storia]
+SEGRETO_PERSONALE: [Qualcosa che nasconde]
+PUNTO_ROTTURA: [Cosa lo farebbe crollare]
 
-CATENA_NARRATIVA_6_SCENE:
+ANTAGONISTA_PSICOLOGIA:
+MOTIVAZIONE_COMPRENSIBILE: [Perché fa quello che fa - deve essere comprensibile]
+LATO_UMANO: [Aspetto che lo rende umano, non solo cattivo]
+MOMENTO_VULNERABILE: [Quando mostra debolezza]
+METODO_MANIPOLAZIONE: [Come influenza gli altri]
+OSSESSIONE: [Cosa lo guida ossessivamente]
+PAURA_SEGRETA: [Di cosa ha paura]
+PASSATO_DOLOROSO: [Cosa lo ha reso così]
+CONTRADDIZIONE: [Aspetto contradditorio del carattere]
+DIALOGO_DISTINTIVO: [Come parla in modo unico]
+GESTO_SIMBOLICO: [Azione ricorrente che lo caratterizza]
 
-SCENA_1: "L'Innesco Misterioso"
-OBIETTIVO: Introdurre protagonista e primo mistero
-EVENTO_SCATENANTE: [Cosa accade di inquietante]
-OGGETTO_INTRODOTTO: [Elemento ricorrente che appare]
-DOMANDA_IRRISOLTA: [Cosa lascia il lettore con curiosità]
-CLIFFHANGER: [Come finisce per creare suspense]
-PONTE_SCENA_2: [Come si collega perfettamente alla scena 2]
+DINAMICA_TRA_PERSONAGGI:
+COSA_LI_UNISCE: [Cosa hanno in comune]
+SPECCHIO_OSCURO: [Come l'antagonista riflette il protagonista]
+TENSIONE_SESSUALE/EMOTIVA: [Se appropriata al genere]
+INCOMPRENSIONE_TRAGICA: [Malintesi che alimentano il conflitto]
+MOMENTO_RICONOSCIMENTO: [Quando si capiscono veramente]
 
-SCENA_2: "Il Primo Indizio"
-CONTINUA_DA: [Riprende esattamente dal cliffhanger della scena 1]
-RIVELAZIONE_PARZIALE: [Cosa si scopre sul mistero]
-COMPLICAZIONE: [Come si aggrava la situazione]
-OGGETTO_EVOLUTO: [Come l'elemento ricorrente cambia]
-NUOVO_PERSONAGGIO: [Chi entra in scena]
-CLIFFHANGER: [Suspense per la scena 3]
-PONTE_SCENA_3: [Collegamento preciso]
-
-SCENA_3: "L'Inganno"
-CONTINUA_DA: [Esatto seguito della scena 2]
-FALSA_PISTA: [Cosa sembra vero ma non lo è]
-ANTAGONISTA_RIVELATO: [Come emerge il nemico]
-TRADIMENTO: [Chi non è quello che sembra]
-PERICOLO_CRESCENTE: [Come aumenta la tensione]
-CLIFFHANGER: [Momento di massimo pericolo]
-PONTE_SCENA_4: [Transizione drammatica]
-
-SCENA_4: "La Rivelazione Scioccante"
-CONTINUA_DA: [Riprende dal pericolo della scena 3]
-VERITÀ_SCONVOLGENTE: [Grande rivelazione sul mistero]
-CAPOVOLGIMENTO: [Come tutto cambia]
-ALLEATO_INASPETTATO: [Chi aiuta il protagonista]
-CORSA_CONTRO_TEMPO: [Urgenza crescente]
-CLIFFHANGER: [Momento decisivo]
-PONTE_SCENA_5: [Verso il climax]
-
-SCENA_5: "Il Confronto Finale"
-CONTINUA_DA: [Diretto dalla tensione della scena 4]
-SCONTRO_DECISIVO: [Battaglia finale]
-SACRIFICIO: [Cosa deve rinunciare il protagonista]
-MOMENTO_DISPERAZIONE: [Quando tutto sembra perduto]
-SVOLTA_FINALE: [Come si ribalta la situazione]
-CLIFFHANGER: [Verso la risoluzione]
-PONTE_SCENA_6: [Collegamento alla conclusione]
-
-SCENA_6: "La Risoluzione Epica"
-CONTINUA_DA: [Conclude la tensione della scena 5]
-RISOLUZIONE_MISTERO: [Come si spiega tutto]
-TRASFORMAZIONE_PROTAGONISTA: [Come è cambiato]
-OGGETTO_FINALE: [Destino dell'elemento ricorrente]
-NUOVA_NORMALITÀ: [Come finisce la storia]
-EPILOGO_INTRIGANTE: [Ultima nota che lascia il segno]
-
-ELEMENTI_CONTINUITÀ:
-DIALOGHI_RICORRENTI: [Frasi che ritornano modificate]
-SIMBOLI_EVOLVENTI: [Come i simboli cambiano significato]
-ATMOSFERA_PROGRESSIVA: [Come cambia il mood]
-COUNTDOWN_NARRATIVO: [Elemento di urgenza crescente]
-
-Scrivi ESATTAMENTE questa struttura, ogni sezione DEVE essere dettagliata e specifica.
+Scrivi tutto nei dettagli, ogni aspetto DEVE essere specifico e unico.
 `;
 
-    return await callLLM(apiKey, SPECIALIZED_MODELS.architect, blueprintPrompt, 'architetto continuità');
+    return await callLLM(apiKey, SPECIALIZED_MODELS.psychologist, psychologyPrompt, 'psicologo narrativo');
   };
 
-  const generateConnectedScenes = async (apiKey: string, blueprint: string) => {
+  const generateEmotionalBlueprint = async (apiKey: string, characterProfiles: string) => {
+    const blueprintPrompt = `
+Sei un ARCHITETTO EMOTIVO MAESTRO. Crea una MAPPA NARRATIVA che fa innamorare il lettore della storia:
+
+PROFILI_PSICOLOGICI_PERSONAGGI:
+${characterProfiles}
+
+PARAMETRI_STORIA:
+- GENERE: ${wizardData.genre?.name}
+- AMBIENTAZIONE: ${wizardData.setting?.name}
+- TRAMA: ${wizardData.plot?.name}
+- STILE: ${wizardData.author?.name}
+
+CREA STRUTTURA EMOTIVA IRRESISTIBILE:
+
+TITOLO_MAGNETICO: [Titolo che cattura immediatamente]
+
+GANCIO_EMOTIVO_PRINCIPALE:
+MISTERO_CHE_OSSESSIONA: [Domanda che tormenta il lettore]
+PERSONAGGIO_AMABILE: [Perché il lettore si affeziona al protagonista]
+POSTA_IN_GIOCO_PERSONALE: [Cosa rischia di perdere di importante]
+TIMER_EMOTIVO: [Pressione temporale che crea ansia]
+
+ARCO_EMOTIVO_6_SCENE:
+
+SCENA_1: "L'Aggancio Irresistibile"
+OBIETTIVO_EMOTIVO: Far innamorare il lettore del protagonista
+SITUAZIONE_RELATABLE: [Situazione con cui il lettore si identifica]
+VULNERABILITÀ_MOSTRATA: [Momento di debolezza che crea empatia]
+MISTERO_INTRIGANTE: [Domanda che ossessiona]
+DETTAGLIO_SENSORIALE: [Odore, suono, texture che immergono]
+CLIFFHANGER_PERSONALE: [Qualcosa che riguarda il cuore del protagonista]
+EMOZIONE_DOMINANTE: [Quale emozione deve provare il lettore]
+
+SCENA_2: "L'Approfondimento"
+RIVELAZIONE_CARATTERE: [Aspetto nuovo del protagonista]
+COMPLICAZIONE_EMOTIVA: [Come si complica emotivamente]
+CONTRASTO_ATMOSFERICO: [Cambio di mood/ambientazione]
+ANTAGONISTA_INTRIGANTE: [Prima apparizione affascinante del nemico]
+ALLEANZA_INASPETTATA: [Nuovo legame emotivo]
+SEGRETO_RIVELATO: [Verità che cambia tutto]
+EMOZIONE_DOMINANTE: [Curiosità, apprensione, fascino]
+
+SCENA_3: "Il Tradimento Emotivo"
+ILLUSIONE_INFRANTA: [Quando tutto quello che sembrava vero non lo è]
+MOMENTO_VULNERABILITÀ: [Quando il protagonista è più fragile]
+ANTAGONISTA_SEDUTTIVO: [Perché il nemico è affascinante]
+PERDITA_DOLOROSA: [Cosa perde emotivamente]
+SCELTA_IMPOSSIBILE: [Dilemma che spezza il cuore]
+SIMBOLO_SPEZZATO: [Oggetto/simbolo che si rompe]
+EMOZIONE_DOMINANTE: [Tradimento, dolore, confusione]
+
+SCENA_4: "La Rivelazione Devastante"
+VERITÀ_SCONVOLGENTE: [Rivelazione che cambia tutto]
+PROTAGONISTA_SPEZZATO: [Momento di massima disperazione]
+ANTAGONISTA_UMANO: [Quando vediamo il lato umano del nemico]
+RICORDO_DOLOROSO: [Flashback che spiega tutto]
+PUNTO_NON_RITORNO: [Momento in cui tutto cambia per sempre]
+EMOZIONE_DOMINANTE: [Shock, devastazione, comprensione]
+
+SCENA_5: "La Rinascita Eroica"
+DECISIONE_CORAGGIOSA: [Quando il protagonista sceglie di lottare]
+SUPERAMENTO_PAURA: [Come affronta la sua paura più grande]
+SACRIFICIO_NOBILE: [Cosa è disposto a sacrificare]
+ALLEATI_INASPETTATI: [Chi lo aiuta nel momento cruciale]
+SCONTRO_INTERIORE: [Battaglia contro i suoi demoni]
+EMOZIONE_DOMINANTE: [Coraggio, determinazione, speranza]
+
+SCENA_6: "La Catarsi Finale"
+CONFRONTO_DEFINITIVO: [Scontro finale non solo fisico ma emotivo]
+PERDONO/VENDETTA: [Come risolve il conflitto interno]
+TRASFORMAZIONE_COMPLETA: [Come è cambiato]
+NUOVO_EQUILIBRIO: [Che persona è diventato]
+SPERANZA_FUTURA: [Cosa succederà dopo]
+EMOZIONE_DOMINANTE: [Catarsi, soddisfazione, commozione]
+
+TECNICHE_COINVOLGIMENTO:
+IDENTIFICAZIONE: [Come il lettore si identifica]
+SUSPENSE_EMOTIVA: [Come mantenere l'ansia emotiva]
+PAYOFF_EMOTIVI: [Momenti di grande soddisfazione]
+SORPRESE_CARATTERE: [Rivelazioni sui personaggi]
+
+Ogni elemento DEVE essere dettagliato e specifico per questa storia.
+`;
+
+    return await callLLM(apiKey, SPECIALIZED_MODELS.architect, blueprintPrompt, 'architetto emotivo');
+  };
+
+  const generateAtmosphericElements = async (apiKey: string, blueprint: string) => {
+    const atmospherePrompt = `
+Sei un MAESTRO DELL'ATMOSFERA. Crea elementi sensoriali e atmosferici che immergono il lettore:
+
+BLUEPRINT_EMOTIVO:
+${blueprint}
+
+AMBIENTAZIONE: ${wizardData.setting?.name} - ${wizardData.setting?.description}
+GENERE: ${wizardData.genre?.name}
+
+CREA ATMOSFERE IMMERSIVE PER OGNI SCENA:
+
+PALETTE_SENSORIALE_GLOBALE:
+COLORI_DOMINANTI: [Palette cromatica della storia]
+SUONI_RICORRENTI: [Suoni che caratterizzano l'ambientazione]
+ODORI_CARATTERISTICI: [Profumi che definiscono i luoghi]
+TEXTURE_TATTILI: [Sensazioni al tatto]
+SAPORI_EMOTIVI: [Gusti legati a emozioni]
+
+SCENA_1_ATMOSFERA:
+AMBIENTAZIONE_DETTAGLIATA: [Descrizione sensoriale completa]
+ILLUMINAZIONE: [Come la luce influenza l'umore]
+SUONI_SPECIFICI: [Rumori di sottofondo, voci, silenzi]
+ODORI_AMBIENTE: [Profumi che caratterizzano il momento]
+TEMPERATURA_EMOTIVA: [Caldo/freddo che riflette emozioni]
+MOVIMENTO_ARIA: [Vento, correnti, immobilità]
+OGGETTI_SIMBOLICI: [Elementi fisici carichi di significato]
+
+SCENA_2_ATMOSFERA:
+[Ripeti la struttura per ogni scena con variazioni atmosferiche]
+
+SCENA_3_ATMOSFERA:
+[Idem]
+
+SCENA_4_ATMOSFERA:
+[Idem]
+
+SCENA_5_ATMOSFERA:
+[Idem]
+
+SCENA_6_ATMOSFERA:
+[Idem]
+
+TRANSIZIONI_ATMOSFERICHE:
+COME_CAMBIA_MOOD: [Come l'atmosfera evolve tra le scene]
+CONTRASTI_EMOTIVI: [Cambi di ritmo atmosferico]
+CONTINUITÀ_SENSORIALE: [Elementi che legano le atmosfere]
+
+Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
+`;
+
+    return await callLLM(apiKey, SPECIALIZED_MODELS.atmosphere, atmospherePrompt, 'maestro atmosfera');
+  };
+
+  const generateImmersiveScenes = async (apiKey: string, characterProfiles: string, blueprint: string, atmosphericElements: string) => {
     const scenes = [];
     
     // Estrai le scene dal blueprint
-    const sceneMatches = blueprint.match(/SCENA_\d+:.*?(?=SCENA_\d+:|ELEMENTI_CONTINUITÀ:|$)/gs) || [];
+    const sceneMatches = blueprint.match(/SCENA_\d+:.*?(?=SCENA_\d+:|TECNICHE_COINVOLGIMENTO:|$)/gs) || [];
     
-    console.log(`🎭 Generando ${sceneMatches.length} scene perfettamente collegate...`);
-
-    for (let i = 0; i < sceneMatches.length; i++) {
+    for (let i = 0; i < Math.min(sceneMatches.length, 6); i++) {
       const sceneStructure = sceneMatches[i];
       
-      setGenerationProgress(`✍️ LLM Scrittore: Scena ${i + 1}/${sceneMatches.length} - Continuità narrativa...`);
+      setGenerationProgress(`✍️ LLM Scrittore: Scena ${i + 1}/6 - Immersione emotiva profonda...`);
       
       try {
-        const sceneContent = await generateConnectedScene(
+        const sceneContent = await generateEmotionalScene(
           apiKey, 
           sceneStructure, 
+          characterProfiles,
           blueprint, 
+          atmosphericElements,
           scenes, 
           i + 1
         );
         
         scenes.push(sceneContent);
-        
-        // Pausa per rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
       } catch (error) {
         console.error(`Errore nella scena ${i + 1}:`, error);
         
-        // Fallback con verifica continuità
         try {
           const fallbackModel = FALLBACK_MODELS[i % FALLBACK_MODELS.length];
-          const fallbackContent = await generateConnectedScene(
+          const fallbackContent = await generateEmotionalScene(
             apiKey, 
             sceneStructure, 
+            characterProfiles,
             blueprint, 
+            atmosphericElements,
             scenes, 
             i + 1,
             fallbackModel
           );
           scenes.push(fallbackContent);
         } catch (fallbackError) {
-          console.error(`Errore fallback scena ${i + 1}:`, fallbackError);
-          scenes.push(createContinuityPlaceholder(i + 1, sceneStructure, scenes));
+          scenes.push(createEmotionalPlaceholder(i + 1, sceneStructure));
         }
       }
     }
@@ -220,10 +327,12 @@ Scrivi ESATTAMENTE questa struttura, ogni sezione DEVE essere dettagliata e spec
     return scenes;
   };
 
-  const generateConnectedScene = async (
+  const generateEmotionalScene = async (
     apiKey: string, 
     sceneStructure: string, 
+    characterProfiles: string,
     fullBlueprint: string, 
+    atmosphericElements: string,
     previousScenes: any[], 
     sceneNumber: number,
     customModel?: string
@@ -232,150 +341,84 @@ Scrivi ESATTAMENTE questa struttura, ogni sezione DEVE essere dettagliata e spec
     
     // Crea contesto di continuità dalle scene precedenti
     const continuityContext = previousScenes.length > 0 
-      ? `SCENE_PRECEDENTI_DETTAGLIATE:
+      ? `SCENE_PRECEDENTI:
 ${previousScenes.map((scene, idx) => 
   `Scena ${idx + 1}: ${scene.title}
-  COME_FINISCE: ${scene.cliffhanger || 'Transizione verso la scena successiva'}
-  ELEMENTI_RICORRENTI: ${scene.recurringElements || 'Da identificare'}
-  ULTIMO_PARAGRAFO: "${scene.content.split('\n').slice(-2).join(' ')}"
+  STATO_EMOTIVO_FINALE: ${scene.emotionalState || 'Da definire'}
+  ULTIMO_MOMENTO: "${scene.content.split('\n').slice(-2).join(' ')}"
   `
-).join('\n\n')}
+).join('\n\n')}`
+      : 'Prima scena - Stabilisci il tono emotivo';
 
-COLLEGAMENTO_RICHIESTO: La scena ${sceneNumber} DEVE iniziare esattamente da dove finisce la scena ${sceneNumber - 1}.
-`
-      : 'Prima scena - Stabilisci gli elementi ricorrenti e il primo cliffhanger.';
+    const immersivePrompt = `
+Sei uno SCRITTORE IMMERSIVO di livello mondiale. Scrivi scene che fanno dimenticare al lettore di star leggendo:
 
-    const continuityPrompt = `
-Sei un SCRITTORE MAESTRO della CONTINUITÀ NARRATIVA. Ogni tua scena è un anello perfetto di una catena narrativa.
+PROFILI_PSICOLOGICI:
+${characterProfiles}
 
-BLUEPRINT_COMPLETO:
+BLUEPRINT_EMOTIVO:
 ${fullBlueprint}
+
+ATMOSFERE_SENSORIALI:
+${atmosphericElements}
 
 ${continuityContext}
 
-SCENA_DA_SCRIVERE_ADESSO:
+SCENA_DA_SCRIVERE:
 ${sceneStructure}
 
-REGOLE_FERREE_CONTINUITÀ:
-1. Se NON è la prima scena, inizia ESATTAMENTE dove finiva la precedente
-2. Riprendi dialoghi, azioni, emozioni in corso
-3. Mantieni PERFETTA coerenza di personaggi e ambientazione
-4. Usa elementi ricorrenti in modo evoluto
-5. Includi dialoghi che richiamano scene precedenti
-6. Termina con un CLIFFHANGER irresistibile
-7. Scrivi ESATTAMENTE 1000-1200 parole
-8. Stile ${wizardData.author?.name}, genere ${wizardData.genre?.name}
+REGOLE_IMMERSIONE_TOTALE:
+1. SHOW DON'T TELL: Mostra emozioni attraverso azioni, non dirle
+2. DETTAGLI_SENSORIALI: Almeno 3 sensi in ogni paragrafo
+3. DIALOGHI_AUTENTICI: Ogni personaggio ha modo di parlare unico
+4. PENSIERI_INTERIORI: Accesso alla mente del protagonista
+5. RITMO_VARIABILE: Alterna tensione e respiro
+6. SOTTOTESTO: Quello che non viene detto è importante
+7. SIMBOLISMO: Oggetti/azioni che rappresentano emozioni
+8. CLIFFHANGER_EMOTIVO: Finisci con una domanda del cuore
 
-OBIETTIVI_SPECIFICI:
-- CONTINUITÀ: Zero interruzioni narrative, collegamento fluido
-- SUSPENSE: Ogni paragrafo aumenta la tensione
-- ELEMENTI_RICORRENTI: Usa oggetti/simboli che attraversano la storia
-- CLIFFHANGER: Finisci con una domanda irrisolta che spinge alla scena successiva
-- CARATTERIZZAZIONE: Sviluppa personaggi attraverso azioni e dialoghi
+TECNICHE_SPECIFICHE:
+- USA METAFORE SENSORIALI per le emozioni
+- CREA TENSIONE attraverso piccoli dettagli
+- FAI RESPIRARE IL LETTORE nel ritmo
+- COSTRUISCI EMPATIA con vulnerabilità del protagonista
+- USA IL CORPO per mostrare stati d'animo
+- CREA SUSPENSE emotiva, non solo di trama
 
-FORMATO_RISPOSTA:
-TITOLO_SCENA: [Titolo che riflette la continuità]
-
-CONTENUTO_CONTINUO:
-[Scena di 1000-1200 parole che si collega perfettamente alle precedenti]
-
-CLIFFHANGER_FINALE: [L'elemento di suspense che porta alla scena successiva]
-
-ELEMENTI_RICORRENTI: [Oggetti/simboli che appaiono in questa scena]
-
-Scrivi SOLO il formato richiesto, senza commenti aggiuntivi.
-`;
-
-    const response = await callLLM(apiKey, model, continuityPrompt, 'scrittore continuità');
-    return parseConnectedScene(response, sceneNumber);
-  };
-
-  const verifyContinuityAndAdjust = async (apiKey: string, scenes: any[], blueprint: string) => {
-    const verifiedScenes = [];
-    
-    for (let i = 0; i < scenes.length; i++) {
-      const scene = scenes[i];
-      
-      setGenerationProgress(`🔗 LLM Continuità: Verificando collegamento scena ${i + 1}...`);
-      
-      try {
-        if (i === 0) {
-          // Prima scena non ha precedenti
-          verifiedScenes.push(scene);
-        } else {
-          const verifiedScene = await verifyContinuity(apiKey, scene, scenes[i - 1], i + 1);
-          verifiedScenes.push(verifiedScene);
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-      } catch (error) {
-        console.error(`Errore verifica continuità scena ${i + 1}:`, error);
-        // Usa la scena originale se la verifica fallisce
-        verifiedScenes.push(scene);
-      }
-    }
-    
-    return verifiedScenes;
-  };
-
-  const verifyContinuity = async (apiKey: string, currentScene: any, previousScene: any, sceneNumber: number) => {
-    const verificationPrompt = `
-Sei un CONTROLLORE DI CONTINUITÀ NARRATIVA esperto. Verifica e correggi la continuità tra queste due scene:
-
-SCENA_PRECEDENTE (${sceneNumber - 1}):
-Titolo: ${previousScene.title}
-Cliffhanger finale: "${previousScene.cliffhanger}"
-Ultimi paragrafi: "${previousScene.content.split('\n').slice(-3).join(' ')}"
-
-SCENA_ATTUALE (${sceneNumber}):
-Titolo: ${currentScene.title}
-Primi paragrafi: "${currentScene.content.split('\n').slice(0, 3).join(' ')}"
-Contenuto completo: ${currentScene.content}
-
-VERIFICA_E_CORREGGI:
-1. La scena ${sceneNumber} inizia coerentemente dal cliffhanger della scena ${sceneNumber - 1}?
-2. Ci sono contraddizioni di personaggi, luoghi, azioni?
-3. Il collegamento è fluido e naturale?
-4. Gli elementi ricorrenti sono mantenuti?
-
-Se trovi problemi, RISCRIVI l'inizio della scena ${sceneNumber} per perfetta continuità.
-Se va già bene, conferma senza modifiche.
+LUNGHEZZA: 1200-1400 parole di qualità cinematografica
 
 FORMATO_RISPOSTA:
-VALUTAZIONE: [OK/CORREZIONE_NECESSARIA]
+TITOLO_EVOCATIVO: [Titolo che cattura l'essenza emotiva]
 
-SCENA_CORRETTA (se necessario):
-TITOLO: ${currentScene.title}
-CONTENUTO_MIGLIORATO: [Contenuto con continuità perfetta]
-CLIFFHANGER: ${currentScene.cliffhanger}
-ELEMENTI_RICORRENTI: ${currentScene.recurringElements}
+CONTENUTO_IMMERSIVO:
+[Scena scritta con tecnica immersiva totale]
 
-Fornisci solo la valutazione e l'eventuale correzione.
+STATO_EMOTIVO_FINALE: [Come si sente il protagonista alla fine]
+
+GANCIO_EMOTIVO: [Cosa spinge a leggere la scena successiva]
+
+SIMBOLI_PRESENTI: [Elementi simbolici usati]
+
+Scrivi una scena che il lettore non riuscirà a dimenticare.
 `;
 
-    const response = await callLLM(apiKey, SPECIALIZED_MODELS.continuity, verificationPrompt, 'controllore continuità');
-    
-    if (response.includes('CORREZIONE_NECESSARIA')) {
-      return parseConnectedScene(response, sceneNumber, currentScene);
-    } else {
-      return currentScene;
-    }
+    const response = await callLLM(apiKey, model, immersivePrompt, 'scrittore immersivo');
+    return parseEmotionalScene(response, sceneNumber);
   };
 
-  const polishTransitionsAndSuspense = async (apiKey: string, scenes: any[]) => {
+  const polishEmotionalImmersion = async (apiKey: string, scenes: any[], characterProfiles: string) => {
     const polishedScenes = [];
     
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
       
-      setGenerationProgress(`📝 LLM Editor: Perfezionando transizioni scena ${i + 1}...`);
+      setGenerationProgress(`📝 LLM Editor: Intensificando impatto emotivo scena ${i + 1}...`);
       
       try {
-        const polishedScene = await polishTransitions(apiKey, scene, scenes, i + 1);
+        const polishedScene = await polishEmotionalImpact(apiKey, scene, scenes, characterProfiles, i + 1);
         polishedScenes.push(polishedScene);
         
-        await new Promise(resolve => setTimeout(resolve, 700));
+        await new Promise(resolve => setTimeout(resolve, 800));
         
       } catch (error) {
         console.error(`Errore perfezionamento scena ${i + 1}:`, error);
@@ -386,73 +429,78 @@ Fornisci solo la valutazione e l'eventuale correzione.
     return polishedScenes;
   };
 
-  const polishTransitions = async (apiKey: string, scene: any, allScenes: any[], sceneNumber: number) => {
+  const polishEmotionalImpact = async (apiKey: string, scene: any, allScenes: any[], characterProfiles: string, sceneNumber: number) => {
     const polishPrompt = `
-Sei un EDITOR ESPERTO di transizioni e suspense. Perfeziona questa scena per massimizzare continuità e tensione:
+Sei un EDITOR EMOTIVO esperto. Intensifica l'impatto emotivo di questa scena:
 
 SCENA_DA_PERFEZIONARE:
 ${scene.title}
 ${scene.content}
-Cliffhanger: ${scene.cliffhanger}
 
-CONTESTO_NARRATIVO:
-- Scena ${sceneNumber} di ${allScenes.length}
-- Genere: ${wizardData.genre?.name}
-- Deve mantenere il lettore incollato
+PROFILI_PERSONAGGI:
+${characterProfiles}
 
-PERFEZIONA:
-1. TRANSIZIONI: Rendi i collegamenti tra paragrafi più fluidi
-2. SUSPENSE: Aumenta gradualmente la tensione
-3. DIALOGHI: Rendili più naturali e caratterizzanti
-4. CLIFFHANGER: Massimizza l'impatto emotivo
-5. RITMO: Alterna momenti di tensione e respiro
-6. GRAMMATICA: Correggi ogni errore
+OBIETTIVI_PERFEZIONAMENTO:
+1. MASSIMIZZA COINVOLGIMENTO emotivo
+2. RAFFORZA CARATTERIZZAZIONE attraverso azioni e dialoghi
+3. INTENSIFICA ATMOSFERA sensoriale
+4. MIGLIORA RITMO narrativo
+5. POTENZIA SOTTOTESTO e non-detto
+6. AFFINA TRANSIZIONI tra emozioni
+7. AMPLIFICA SIMBOLISMO
+
+TECNICHE_RAFFINAMENTO:
+- Sostituisci aggettivi generici con dettagli specifici
+- Trasforma esposizione in azione drammatica
+- Aggiungi layer di significato attraverso gesti e sguardi
+- Intensifica conflitto interno del protagonista
+- Rendi ogni dialogo multi-livello (superficie + sottotesto)
+- Usa pause e silenzi per creare tensione
 
 MANTIENI:
-- Stessa lunghezza (1000-1200 parole)
-- Stessa trama e personaggi
-- Stesso cliffhanger (migliorato)
-- Stessi elementi ricorrenti
+- Stessa trama e sviluppi
+- Lunghezza originale
+- Gancio emotivo finale
 
 FORMATO_RISPOSTA:
-TITOLO_PERFEZIONATO: [Titolo ottimizzato]
+TITOLO_RAFFINATO: [Titolo con maggiore impatto]
 
-CONTENUTO_PERFEZIONATO:
-[Scena con transizioni e suspense ottimizzate]
+CONTENUTO_INTENSIFICATO:
+[Scena con coinvolgimento emotivo massimizzato]
 
-CLIFFHANGER_OTTIMIZZATO: [Cliffhanger con massimo impatto]
+IMPATTO_EMOTIVO_FINALE: [Come colpisce il lettore]
 
-ELEMENTI_RICORRENTI: [Elementi simbolici presenti]
+ELEMENTI_SIMBOLICI: [Simboli e metafore presenti]
 
-Perfeziona senza stravolgere la storia originale.
+Rendi questa scena indimenticabile.
 `;
 
-    const response = await callLLM(apiKey, SPECIALIZED_MODELS.editor, polishPrompt, 'editor transizioni');
-    return parseConnectedScene(response, sceneNumber, scene);
+    const response = await callLLM(apiKey, SPECIALIZED_MODELS.editor, polishPrompt, 'editor emotivo');
+    return parseEmotionalScene(response, sceneNumber, scene);
   };
 
-  const addContinuityImagePrompts = async (apiKey: string, scenes: any[]) => {
+  const addAtmosphericImagePrompts = async (apiKey: string, scenes: any[], atmosphericElements: string) => {
     const scenesWithImages = [];
     
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
       
-      setGenerationProgress(`🎨 Generando prompt visivo per scena ${i + 1}...`);
+      setGenerationProgress(`🎨 Creando prompt visivo atmosferico per scena ${i + 1}...`);
       
       try {
-        const imagePrompt = await generateOptimizedImagePrompt(apiKey, scene);
+        const imagePrompt = await generateAtmosphericImagePrompt(apiKey, scene, atmosphericElements);
         scenesWithImages.push({
           ...scene,
           imagePrompt
         });
         
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 600));
         
       } catch (error) {
         console.error(`Errore prompt immagine scena ${i + 1}:`, error);
         scenesWithImages.push({
           ...scene,
-          imagePrompt: `${wizardData.genre?.name} scene, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic, high quality'}`
+          imagePrompt: `atmospheric ${wizardData.genre?.name} scene, ${wizardData.setting?.name}, cinematic lighting, emotional depth`
         });
       }
     }
@@ -460,40 +508,42 @@ Perfeziona senza stravolgere la storia originale.
     return scenesWithImages;
   };
 
-  const generateOptimizedImagePrompt = async (apiKey: string, scene: any) => {
+  const generateAtmosphericImagePrompt = async (apiKey: string, scene: any, atmosphericElements: string) => {
     const imagePrompt = `
-Analizza questa scena e crea un prompt PERFETTO per Stable Diffusion:
+Crea un prompt PERFETTO per Stable Diffusion che catturi l'atmosfera emotiva:
 
 SCENA: ${scene.title}
-CONTENUTO: ${scene.content.substring(0, 800)}...
+CONTENUTO: ${scene.content.substring(0, 600)}...
+STATO_EMOTIVO: ${scene.emotionalState || ''}
 
-PARAMETRI_VISIVI:
-- Genere: ${wizardData.genre?.name}
-- Ambientazione: ${wizardData.setting?.name}
-- Stile: ${wizardData.style?.name}
+ELEMENTI_ATMOSFERICI:
+${atmosphericElements.substring(0, 400)}...
 
-Crea un prompt in inglese di MAX 150 caratteri che descriva:
-1. La scena specifica con personaggi principali
-2. L'ambientazione e atmosfera
-3. Lo stile visivo scelto
-4. Qualità cinematografica
+GENERE: ${wizardData.genre?.name}
+AMBIENTAZIONE: ${wizardData.setting?.name}
 
-Rispondi SOLO con il prompt in inglese, senza spiegazioni:
+Crea prompt in inglese di MAX 150 caratteri che includa:
+1. Protagonista in azione emotiva specifica
+2. Atmosfera sensoriale dettagliata
+3. Illuminazione che riflette l'emozione
+4. Stile cinematografico del genere
+
+Solo il prompt, senza spiegazioni:
 `;
 
     try {
-      const response = await callLLM(apiKey, SPECIALIZED_MODELS.writer, imagePrompt, 'generatore prompt immagini');
+      const response = await callLLM(apiKey, SPECIALIZED_MODELS.atmosphere, imagePrompt, 'atmosfera visiva');
       let prompt = response.replace(/['"]/g, '').trim();
       
-      if (wizardData.style?.prompt && !prompt.includes(wizardData.style.prompt)) {
-        prompt += `, ${wizardData.style.prompt}`;
+      // Aggiungi elementi di qualità cinematografica
+      if (!prompt.includes('cinematic')) {
+        prompt += ', cinematic';
       }
       
       return prompt.substring(0, 150);
       
     } catch (error) {
-      console.error('Errore generazione prompt immagine:', error);
-      return `${wizardData.genre?.name} scene, ${wizardData.setting?.name}, ${wizardData.style?.prompt || 'cinematic style'}`;
+      return `emotional ${wizardData.genre?.name} scene, atmospheric lighting, ${wizardData.setting?.name}, cinematic depth`;
     }
   };
 
@@ -511,18 +561,18 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
         messages: [
           {
             role: 'system',
-            content: `Sei un ${role} professionista. Scrivi sempre in italiano perfetto con grammatica e punteggiatura impeccabili. Crea CONTINUITÀ NARRATIVA PERFETTA tra le scene. Ogni scena deve collegare perfettamente a quella successiva.`
+            content: `Sei un ${role} di livello mondiale. Crei storie che catturano il lettore emotivamente e lo tengono incollato. Scrivi sempre in italiano con prosa fluida e coinvolgente. Ogni parola deve servire a immergere il lettore.`
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: role === 'architetto continuità' ? 0.3 : role === 'controllore continuità' ? 0.2 : 0.6,
-        max_tokens: role === 'architetto continuità' ? 2500 : 2000,
-        top_p: 0.85,
-        frequency_penalty: 0.5, // Riduce molto le ripetizioni
-        presence_penalty: 0.4   // Incoraggia varietà mantenendo coerenza
+        temperature: role.includes('psicologo') || role.includes('architetto') ? 0.4 : 0.7,
+        max_tokens: role.includes('atmosfera') ? 1500 : 2200,
+        top_p: 0.9,
+        frequency_penalty: 0.3,
+        presence_penalty: 0.6
       }),
     });
 
@@ -534,39 +584,46 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
     return data.choices[0]?.message?.content || '';
   };
 
-  const parseConnectedScene = (content: string, sceneNumber: number, fallbackScene?: any) => {
+  const parseEmotionalScene = (content: string, sceneNumber: number, fallbackScene?: any) => {
     const lines = content.split('\n').filter(line => line.trim());
     let title = fallbackScene?.title || `Scena ${sceneNumber}`;
     let sceneContent = '';
-    let cliffhanger = '';
-    let recurringElements = '';
+    let emotionalState = '';
+    let emotionalHook = '';
+    let symbols = '';
 
     // Estrai titolo
-    const titleMatch = content.match(/TITOLO[_\s]*(?:SCENA|PERFEZIONATO)?:\s*(.+)/i);
+    const titleMatch = content.match(/TITOLO[_\s]*(?:EVOCATIVO|RAFFINATO)?:\s*(.+)/i);
     if (titleMatch) {
       title = titleMatch[1].trim();
     }
 
     // Estrai contenuto
-    const contentMatch = content.match(/CONTENUTO[_\s]*(?:CONTINUO|MIGLIORATO|PERFEZIONATO)?:\s*([\s\S]*?)(?=CLIFFHANGER|ELEMENTI_RICORRENTI|$)/i);
+    const contentMatch = content.match(/CONTENUTO[_\s]*(?:IMMERSIVO|INTENSIFICATO)?:\s*([\s\S]*?)(?=STATO_EMOTIVO|IMPATTO_EMOTIVO|GANCIO_EMOTIVO|$)/i);
     if (contentMatch) {
       sceneContent = contentMatch[1].trim();
     }
 
-    // Estrai cliffhanger
-    const cliffhangerMatch = content.match(/CLIFFHANGER[_\s]*(?:FINALE|OTTIMIZZATO)?:\s*(.+)/i);
-    if (cliffhangerMatch) {
-      cliffhanger = cliffhangerMatch[1].trim();
+    // Estrai stato emotivo
+    const stateMatch = content.match(/(?:STATO_EMOTIVO_FINALE|IMPATTO_EMOTIVO_FINALE):\s*(.+)/i);
+    if (stateMatch) {
+      emotionalState = stateMatch[1].trim();
     }
 
-    // Estrai elementi ricorrenti
-    const elementsMatch = content.match(/ELEMENTI_RICORRENTI:\s*(.+)/i);
-    if (elementsMatch) {
-      recurringElements = elementsMatch[1].trim();
+    // Estrai gancio emotivo
+    const hookMatch = content.match(/GANCIO_EMOTIVO:\s*(.+)/i);
+    if (hookMatch) {
+      emotionalHook = hookMatch[1].trim();
+    }
+
+    // Estrai simboli
+    const symbolsMatch = content.match(/(?:SIMBOLI_PRESENTI|ELEMENTI_SIMBOLICI):\s*(.+)/i);
+    if (symbolsMatch) {
+      symbols = symbolsMatch[1].trim();
     }
 
     // Fallback se il parsing fallisce
-    if (!sceneContent || sceneContent.length < 200) {
+    if (!sceneContent || sceneContent.length < 300) {
       sceneContent = fallbackScene?.content || content;
     }
 
@@ -574,29 +631,29 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       id: `scene-${sceneNumber}`,
       title: title,
       content: sceneContent,
-      cliffhanger: cliffhanger,
-      recurringElements: recurringElements,
+      emotionalState: emotionalState,
+      emotionalHook: emotionalHook,
+      symbols: symbols,
       imagePrompt: '' // Sarà popolato dopo
     };
   };
 
-  const createContinuityPlaceholder = (sceneNumber: number, sceneStructure: string, previousScenes: any[]) => {
-    const lastCliffhanger = previousScenes.length > 0 ? previousScenes[previousScenes.length - 1].cliffhanger : '';
-    
+  const createEmotionalPlaceholder = (sceneNumber: number, sceneStructure: string) => {
     return {
       id: `scene-${sceneNumber}`,
-      title: `Scena ${sceneNumber} - Continuità da ristabilire`,
-      content: `[SCENA DA RIGENERARE CON CONTINUITÀ]\n\nDeve continuare da: "${lastCliffhanger}"\n\nStruttura richiesta: ${sceneStructure.substring(0, 200)}...`,
-      cliffhanger: `Collegamento verso scena ${sceneNumber + 1}`,
-      recurringElements: 'Da identificare nella rigenerazione',
-      imagePrompt: `${wizardData.genre?.name} placeholder scene`
+      title: `Scena ${sceneNumber} - Immersione da completare`,
+      content: `[SCENA DA RIGENERARE CON FOCUS EMOTIVO]\n\nStruttura richiesta: ${sceneStructure.substring(0, 200)}...`,
+      emotionalState: 'Da definire nella rigenerazione',
+      emotionalHook: `Collegamento emotivo verso scena ${sceneNumber + 1}`,
+      symbols: 'Da identificare',
+      imagePrompt: `emotional ${wizardData.genre?.name} placeholder scene`
     };
   };
 
-  const createContinuousStory = (blueprint: string, scenes: any[]) => {
+  const createImmersiveStory = (blueprint: string, scenes: any[], characterProfiles: string) => {
     // Estrai il titolo dal blueprint
-    const titleMatch = blueprint.match(/TITOLO:\s*(.+)/);
-    const title = titleMatch ? titleMatch[1].trim() : 'Storia Epica con Continuità Perfetta';
+    const titleMatch = blueprint.match(/TITOLO_MAGNETICO:\s*(.+)/);
+    const title = titleMatch ? titleMatch[1].trim() : 'Storia Immersiva con Personaggi Profondi';
 
     // Calcola statistiche
     let totalWordCount = 0;
@@ -614,16 +671,19 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       scenes: scenes,
       estimatedReadingTime,
       wordCount: totalWordCount,
-      continuityScore: 'Perfetta', // Indica qualità della continuità
-      blueprint: blueprint // Conserva la mappa narrativa
+      immersionLevel: 'Massima', // Indica qualità della continuità
+      characterDepth: 'Profonda',
+      emotionalImpact: 'Alto',
+      blueprint: blueprint, // Conserva la mappa narrativa
+      characterProfiles: characterProfiles
     };
 
-    console.log('Storia con continuità perfetta completata:', {
+    console.log('Storia immersiva completata:', {
       title: story.title,
       scenes: story.scenes.length,
       wordCount: story.wordCount,
-      continuityElements: scenes.map(s => s.recurringElements).filter(Boolean),
-      cliffhangers: scenes.map(s => s.cliffhanger).filter(Boolean)
+      emotionalStates: scenes.map(s => s.emotionalState).filter(Boolean),
+      symbolism: scenes.map(s => s.symbols).filter(Boolean)
     });
     
     return story;
@@ -640,24 +700,24 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
     }
 
     setIsGenerating(true);
-    setGenerationProgress('🚀 Inizializzazione sistema narrativo con continuità...');
+    setGenerationProgress('🧠 Inizializzazione sistema narrativo immersivo...');
     onApiKeySet(apiKey);
     
     try {
-      const story = await generateContinuousStory(apiKey);
+      const story = await generateImmersiveStory(apiKey);
       
       toast({
-        title: "Storia con Continuità Perfetta Completata!",
-        description: `${story.scenes.length} scene perfettamente collegate, ${story.wordCount} parole di qualità cinematografica!`,
+        title: "Storia Immersiva Completata!",
+        description: `${story.scenes.length} scene con personaggi profondi e atmosfere coinvolgenti, ${story.wordCount} parole di qualità emotiva!`,
       });
 
       onStoryGenerated(story);
       
     } catch (error) {
-      console.error('Errore nella generazione continua:', error);
+      console.error('Errore nella generazione immersiva:', error);
       toast({
         title: "Errore",
-        description: "Si è verificato un errore durante la generazione continua. Controlla la tua API key.",
+        description: "Si è verificato un errore durante la generazione immersiva. Controlla la tua API key.",
         variant: "destructive"
       });
     } finally {
@@ -684,20 +744,20 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/20 to-orange-600/20 rounded-full border border-purple-500/30">
           <Sparkles className="w-5 h-5 text-yellow-400" />
-          <span className="text-sm font-medium">Sistema Narrativo Continuo - 4 LLM Specializzati</span>
+          <span className="text-sm font-medium">Sistema Immersivo - 5 LLM Specializzati</span>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-gradient animate-float">
-          Continuità Narrativa Perfetta
+          Storie che Catturano il Cuore
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          4 AI specializzati creano storie con continuità cinematografica: ogni scena si collega perfettamente alla successiva!
+          5 AI specializzati creano personaggi profondi e atmosfere immersive che rendono impossibile smettere di leggere!
         </p>
       </div>
 
       {/* Story Summary */}
       <Card className="gradient-dark border-border/50">
         <CardHeader>
-          <CardTitle className="text-center">Riepilogo della Tua Storia</CardTitle>
+          <CardTitle className="text-center">La Tua Storia Immersiva</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
@@ -770,67 +830,78 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
           </div>
           
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-3">🎭 Sistema Narrativo con Continuità Perfetta:</h4>
+            <h4 className="font-semibold mb-3">🎭 Sistema Immersivo con 5 LLM Specializzati:</h4>
             <div className="grid grid-cols-1 gap-3 text-sm">
-              <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
+              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">1</div>
                 <div>
-                  <div className="font-medium text-blue-300">LLM Architetto</div>
-                  <div className="text-muted-foreground">Crea mappa narrativa con cliffhanger perfetti</div>
+                  <div className="font-medium text-purple-300">LLM Psicologo</div>
+                  <div className="text-muted-foreground">Crea profili psicologici profondi e autentici</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
+                <div>
+                  <div className="font-medium text-blue-300">LLM Architetto Emotivo</div>
+                  <div className="text-muted-foreground">Costruisce archi emotivi irresistibili</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">2</div>
+                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
                 <div>
-                  <div className="font-medium text-green-300">LLM Scrittore</div>
-                  <div className="text-muted-foreground">Tesse scene perfettamente collegate</div>
+                  <div className="font-medium text-green-300">LLM Atmosfera</div>
+                  <div className="text-muted-foreground">Crea ambientazioni sensoriali immersive</div>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">3</div>
+                <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">4</div>
                 <div>
-                  <div className="font-medium text-orange-300">LLM Continuità</div>
-                  <div className="text-muted-foreground">Verifica e corregge collegamenti narrativi</div>
+                  <div className="font-medium text-orange-300">LLM Scrittore Immersivo</div>
+                  <div className="text-muted-foreground">Scrive scene che catturano il lettore</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">4</div>
+              <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">5</div>
                 <div>
-                  <div className="font-medium text-purple-300">LLM Editor</div>
-                  <div className="text-muted-foreground">Perfeziona transizioni e suspense</div>
+                  <div className="font-medium text-red-300">LLM Editor Emotivo</div>
+                  <div className="text-muted-foreground">Massimizza l'impatto emotivo finale</div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-2">🔗 Garantie di Continuità:</h4>
+            <h4 className="font-semibold mb-2">💝 Garanzie di Immersione Totale:</h4>
             <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                Ogni scena inizia dove finisce la precedente
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                Personaggi con psicologie complesse e realistiche
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Cliffhanger irresistibili tra le scene
+                <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                Atmosfere sensoriali che immergono completamente
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                Elementi ricorrenti che attraversano la storia
+                Archi emotivi che creano dipendenza dalla lettura
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                Personaggi coerenti e ben caratterizzati
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                Dialoghi autentici che rivelano personalità
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                Ritmo crescente che mantiene il lettore incollato
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                Simbolismo profondo che arricchisce la narrazione
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                Cliffhanger emotivi impossibili da ignorare
               </div>
             </div>
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-semibold mb-2">Come ottenere la tua API Key:</h4>
+            <h4 className="font-semibold mb-2">🔗 Come ottenere la tua API Key:</h4>
             <ol className="text-sm text-muted-foreground space-y-1">
               <li>1. Vai su <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">openrouter.ai</a></li>
               <li>2. Crea un account o accedi</li>
@@ -858,12 +929,12 @@ Rispondi SOLO con il prompt in inglese, senza spiegazioni:
             {isGenerating ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Creazione Continuità Narrativa...
+                Creazione Storia Immersiva...
               </>
             ) : (
               <>
                 <Zap className="w-5 h-5 mr-2" />
-                Genera Storia con Continuità Perfetta (6 scene collegate)
+                Genera Storia Immersiva (6 scene con personaggi profondi)
               </>
             )}
           </Button>
