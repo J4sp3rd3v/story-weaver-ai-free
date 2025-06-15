@@ -61,8 +61,15 @@ const StoryWizard = () => {
 
   const onStoryGenerated = (story: Story) => {
     console.log('Story generated:', story);
-    setGeneratedStory(story);
-    setCurrentStep(8);
+    // Validate story structure before setting it
+    if (story && typeof story === 'object' && story.title && Array.isArray(story.scenes)) {
+      setGeneratedStory(story);
+      setCurrentStep(8);
+    } else {
+      console.error('Invalid story structure received:', story);
+      // Handle invalid story structure
+      setGeneratedStory(null);
+    }
   };
 
   const resetWizard = () => {
@@ -145,14 +152,37 @@ const StoryWizard = () => {
           />
         );
       case 8:
-        // Only render StoryDisplay if we have a valid story with required properties
-        if (!generatedStory || !generatedStory.title || !generatedStory.scenes) {
-          console.error('Story data is incomplete:', generatedStory);
+        // Enhanced validation for story display
+        if (!generatedStory) {
+          console.error('No story generated');
+          return (
+            <div className="max-w-4xl mx-auto p-6 text-center">
+              <h2 className="text-2xl font-bold mb-4">Nessuna storia generata</h2>
+              <p className="text-muted-foreground mb-4">
+                Non è stata generata alcuna storia. Torna indietro e riprova.
+              </p>
+              <button 
+                onClick={resetWizard}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+              >
+                Ricomincia
+              </button>
+            </div>
+          );
+        }
+
+        if (!generatedStory.title || !Array.isArray(generatedStory.scenes) || generatedStory.scenes.length === 0) {
+          console.error('Story data is incomplete:', {
+            hasTitle: !!generatedStory.title,
+            hasScenesArray: Array.isArray(generatedStory.scenes),
+            scenesLength: generatedStory.scenes?.length || 0,
+            fullStory: generatedStory
+          });
           return (
             <div className="max-w-4xl mx-auto p-6 text-center">
               <h2 className="text-2xl font-bold mb-4">Errore nella generazione della storia</h2>
               <p className="text-muted-foreground mb-4">
-                Si è verificato un problema durante la generazione della storia.
+                Si è verificato un problema durante la generazione della storia. I dati sono incompleti.
               </p>
               <button 
                 onClick={resetWizard}
