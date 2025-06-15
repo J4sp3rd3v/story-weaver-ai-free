@@ -55,6 +55,86 @@ const getLeastUsedModel = (models: string[]) => {
   return leastUsedModel;
 };
 
+// Funzione per validare la qualità del contenuto
+const validateContentQuality = (content: string): boolean => {
+  if (!content || content.length < 50) return true;
+  
+  // Conta caratteri di punteggiatura vs lettere
+  const punctuationCount = (content.match(/[.,;:!?*"'`]/g) || []).length;
+  const letterCount = (content.match(/[a-zA-ZàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħĨĩĪīĬĭĮįİıĲĳĴĵĶķĸĹĺĻļĽľĿŀŁłŃńŅņŇňŉŊŋŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽž]/g) || []).length;
+  
+  // Se più del 40% è punteggiatura, è spazzatura
+  if (punctuationCount > letterCount * 0.4) {
+    console.warn(`🗑️ Troppa punteggiatura: ${punctuationCount}/${letterCount}`);
+    return true;
+  }
+  
+  // Controlla pattern di spazzatura
+  const garbagePatterns = [
+    /^\s*[*".,;:!?\s]+$/,  // Solo punteggiatura e spazi
+    /^[\s*"'.,;:!?]{20,}/, // Inizio con troppa punteggiatura
+    /[*]{3,}/,             // Troppi asterischi consecutivi
+    /["']{3,}/,            // Troppe virgolette consecutive
+    /[.,;:!?]{5,}/,        // Troppa punteggiatura consecutiva
+    /^\s*["*\s.,;:!?]+\s*$/ // Solo caratteri speciali
+  ];
+  
+  for (const pattern of garbagePatterns) {
+    if (pattern.test(content)) {
+      console.warn(`🗑️ Pattern spazzatura rilevato: ${pattern}`);
+      return true;
+    }
+  }
+  
+  // Controlla se ha parole italiane valide
+  const italianWords = content.match(/\b[a-zA-ZàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿĀāĂăĄąĆćĈĉĊċČčĎďĐđĒēĔĕĖėĘęĚěĜĝĞğĠġĢģĤĥĦħĨĩĪīĬĭĮįİıĲĳĴĵĶķĸĹĺĻļĽľĿŀŁłŃńŅņŇňŉŊŋŌōŎŏŐőŒœŔŕŖŗŘřŚśŜŝŞşŠšŢţŤťŦŧŨũŪūŬŭŮůŰűŲųŴŵŶŷŸŹźŻżŽž]{3,}\b/g) || [];
+  
+  if (italianWords.length < 10) {
+    console.warn(`🗑️ Troppe poche parole valide: ${italianWords.length}`);
+    return true;
+  }
+  
+  return false;
+};
+
+// Funzione per pulire e validare il contenuto
+const cleanAndValidateContent = (content: string): string => {
+  if (!content) return '';
+  
+  let cleaned = content
+    // Rimuovi caratteri non latini
+    .replace(/[\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf]/g, '')
+    // Rimuovi sequenze eccessive di punteggiatura
+    .replace(/[*]{3,}/g, '...')
+    .replace(/["']{3,}/g, '"')
+    .replace(/[.,;:!?]{3,}/g, '.')
+    // Rimuovi spazi multipli
+    .replace(/\s{3,}/g, ' ')
+    // Rimuovi righe vuote multiple
+    .replace(/\n{3,}/g, '\n\n')
+    // Rimuovi asterischi isolati
+    .replace(/\s\*\s/g, ' ')
+    .replace(/^\*+\s*/gm, '')
+    .replace(/\s*\*+$/gm, '')
+    // Pulisci virgolette malformate
+    .replace(/"\s*"/g, '')
+    .replace(/'\s*'/g, '')
+    // Rimuovi pattern di spazzatura comuni
+    .replace(/^[\s*"'.,;:!?]+/gm, '')
+    .replace(/[\s*"'.,;:!?]+$/gm, '')
+    .trim();
+  
+  // Se dopo la pulizia è troppo corto o ancora spazzatura, restituisci placeholder
+  if (cleaned.length < 100 || validateContentQuality(cleaned)) {
+    console.warn('🔧 Contenuto ancora corrotto dopo pulizia, uso placeholder');
+    return 'CONTENUTO_DA_RIGENERARE: Il modello AI ha prodotto contenuto corrotto. Riprovare la generazione.';
+  }
+  
+  return cleaned;
+};
+
+
+
 const StoryGeneration: React.FC<StoryGenerationProps> = ({
   wizardData,
   onApiKeySet,
@@ -351,7 +431,10 @@ Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
         console.error(`Errore nella scena ${i + 1}:`, error);
         
         try {
-          const fallbackModel = FALLBACK_MODELS[i % FALLBACK_MODELS.length];
+          // Primo tentativo: fallback con modello diverso
+          const fallbackModel = getLeastUsedModel(FALLBACK_MODELS);
+          console.log(`🔄 Tentativo fallback scena ${i + 1} con ${fallbackModel}`);
+          
           const fallbackContent = await generateEmotionalScene(
             apiKey, 
             sceneStructure, 
@@ -363,8 +446,20 @@ Ogni descrizione deve essere ricca di dettagli sensoriali specifici.
             fallbackModel
           );
           scenes.push(fallbackContent);
+          
         } catch (fallbackError) {
-          scenes.push(createEmotionalPlaceholder(i + 1, sceneStructure));
+          console.error(`❌ Fallback fallito per scena ${i + 1}:`, fallbackError);
+          
+          try {
+            // Secondo tentativo: prompt semplificato
+            console.log(`🔧 Tentativo con prompt semplificato per scena ${i + 1}`);
+            const simpleContent = await generateSimpleScene(apiKey, i + 1, sceneStructure, scenes);
+            scenes.push(simpleContent);
+            
+          } catch (simpleError) {
+            console.error(`❌ Anche prompt semplificato fallito per scena ${i + 1}`);
+            scenes.push(createEmotionalPlaceholder(i + 1, sceneStructure));
+          }
         }
       }
     }
@@ -825,7 +920,26 @@ Scrivi SOLO il prompt finale dettagliato:
       }
 
       const data = await response.json();
-      const content = data.choices[0]?.message?.content || '';
+      let content = data.choices[0]?.message?.content || '';
+      
+      // VALIDAZIONE CRITICA: Controlla se il contenuto è spazzatura
+      const isGarbage = validateContentQuality(content);
+      if (isGarbage) {
+        console.error(`🗑️ Contenuto spazzatura rilevato da ${model}`);
+        
+        // Se è spazzatura, forza il fallback
+        if (retryCount < maxRetries && fallbackModels.length > 0) {
+          const fallbackModel = getLeastUsedModel(fallbackModels);
+          console.log(`🔄 Rigenerazione con ${fallbackModel} per contenuto corrotto`);
+          setGenerationProgress(`🔧 Contenuto corrotto, rigenerando con ${fallbackModel.split('/')[1]}...`);
+          
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return await callLLM(apiKey, fallbackModel, prompt, role, retryCount + 1);
+        }
+      }
+      
+      // Pulizia robusta del contenuto
+      content = cleanAndValidateContent(content);
       
       if (retryCount > 0) {
         console.log(`✅ Successo con fallback dopo ${retryCount} tentativi`);
@@ -849,6 +963,80 @@ Scrivi SOLO il prompt finale dettagliato:
       
       throw error;
     }
+  };
+
+  // Funzione di emergenza per generare scene con prompt semplificato
+  const generateSimpleScene = async (apiKey: string, sceneNumber: number, sceneStructure: string, previousScenes: any[]) => {
+    const simplePrompt = `
+Scrivi una scena semplice e chiara in italiano per una storia.
+
+SCENA ${sceneNumber} di 6
+
+STRUTTURA RICHIESTA:
+${sceneStructure.substring(0, 300)}
+
+SCENE PRECEDENTI:
+${previousScenes.map((scene, idx) => `Scena ${idx + 1}: ${scene.title}`).join('\n')}
+
+REGOLE SEMPLICI:
+1. Scrivi SOLO in italiano corretto
+2. Lunghezza: 400-600 parole
+3. Struttura: Inizio-Sviluppo-Fine
+4. Niente caratteri strani o simboli
+5. Storia coerente con le scene precedenti
+
+FORMATO:
+TITOLO: [Titolo della scena]
+
+CONTENUTO:
+[Scrivi qui la scena in italiano semplice e chiaro]
+
+EMOZIONE: [Emozione principale]
+`;
+
+    const response = await callLLM(apiKey, getLeastUsedModel(FALLBACK_MODELS), simplePrompt, 'scrittore semplice');
+    
+    // Parsing semplificato
+    let title = `Scena ${sceneNumber}`;
+    let content = '';
+    let emotion = 'Tensione narrativa';
+    
+    const titleMatch = response.match(/TITOLO:\s*(.+)/i);
+    if (titleMatch) {
+      title = titleMatch[1].trim().replace(/["']/g, '');
+    }
+    
+    const contentMatch = response.match(/CONTENUTO:\s*([\s\S]*?)(?=EMOZIONE:|$)/i);
+    if (contentMatch) {
+      content = contentMatch[1].trim();
+    }
+    
+    const emotionMatch = response.match(/EMOZIONE:\s*(.+)/i);
+    if (emotionMatch) {
+      emotion = emotionMatch[1].trim().replace(/["']/g, '');
+    }
+    
+    // Se il contenuto è ancora troppo corto, crea un placeholder decente
+    if (!content || content.length < 200) {
+      content = `La storia continua con eventi che si sviluppano gradualmente. I personaggi affrontano nuove sfide mentre la trama procede verso il suo climax. Ogni momento è carico di tensione e significato, portando il lettore sempre più in profondità nella narrazione.
+
+Gli eventi si susseguono con un ritmo incalzante, mentre i protagonisti devono fare i conti con le conseguenze delle loro azioni precedenti. La situazione si complica ulteriormente, creando nuovi ostacoli da superare.
+
+Il destino dei personaggi sembra appeso a un filo, mentre le forze in gioco si preparano per il confronto finale. Ogni decisione potrebbe cambiare il corso degli eventi in modo irreversibile.`;
+    }
+    
+    // Pulizia finale
+    content = cleanAndValidateContent(content);
+    
+    return {
+      id: `scene-${sceneNumber}`,
+      title: title,
+      content: content,
+      emotionalState: emotion,
+      emotionalHook: `Collegamento verso scena ${sceneNumber + 1}`,
+      symbols: 'Elementi narrativi di continuità',
+      imagePrompt: ''
+    };
   };
 
   // Funzioni helper per nomi appropriati all'autore
